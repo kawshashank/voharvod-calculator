@@ -83,7 +83,7 @@ def add_bg_from_local(image_file):
         .stApp {{
             background-image: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url(data:image/jpeg;base64,{encoded_string});
             background-size: cover;
-            background-position: top center; /* Anchors the top of the image so the head stays visible */
+            background-position: top center;
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
@@ -103,7 +103,7 @@ st.set_page_config(page_title="Voharvod Calculator Bot", page_icon="ॐ")
 # Try to load the background if the image is present
 add_bg_from_local("mahadev.jpg")
 
-# Removed nowrap so it can fit on mobile screens, added centering, and updated text
+# Mobile-friendly title that centers beautifully on all screens
 st.markdown(
     "<h2 style='text-align: center; margin-bottom: 20px;'>ॐ Voharvod Calculator ॐ</h2>", 
     unsafe_allow_html=True
@@ -122,7 +122,7 @@ with col1:
     time_block = st.selectbox(
         "Approximate Time of Birth",
         [
-            "Unknown (Defaults to late afternoon)",
+            "Default (Safest bet)",
             "Early Morning (Before 8 AM)",
             "Late Morning (8 AM - 12 PM)",
             "Afternoon (12 PM - 4 PM)",
@@ -131,15 +131,23 @@ with col1:
         ],
         index=0 
     )
+    
+    if time_block != "Default (Safest bet)":
+        st.warning("⚠️ Change the time only if you are reasonably sure about it. If in doubt, keeping it on 'Default' is the safest bet.")
+
+    with st.expander("💡 Why does time matter?"):
+        st.write("The Kashmiri calendar doesn't change at midnight like a normal clock. A traditional 'day' can actually change in the middle of the afternoon! If changing your time shifts your birthday by one day, it just means you were born exactly when the calendar was turning over.")
 
 with col2:
     target_year = st.number_input("Target Year", min_value=2024, max_value=2100, value=2026)
     
     known_tithi_options = ["Unknown / Calculate for me"] + list(TITHI_NAMES.values())
     override_tithi_name = st.selectbox("Known Birth Tithi (Optional)", known_tithi_options)
+    
+    st.caption("✨ *Tip: If you don't know your birth time, but you already know your exact Tithi name, select it here to skip the guesswork!*")
 
 TIME_MAP = {
-    "Unknown (Defaults to late afternoon)": time(18, 0), 
+    "Default (Safest bet)": time(18, 0), 
     "Early Morning (Before 8 AM)": time(6, 0),   
     "Late Morning (8 AM - 12 PM)": time(10, 0),  
     "Afternoon (12 PM - 4 PM)": time(14, 0),     

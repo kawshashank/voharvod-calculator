@@ -2,6 +2,7 @@ import streamlit as st
 import swisseph as swe
 import base64
 import os
+import urllib.parse
 from datetime import date, time, timedelta
 
 # --- CONFIGURE SWISS EPHEMERIS ---
@@ -100,10 +101,8 @@ def add_bg_from_local(image_file):
 # --- APP UI ---
 st.set_page_config(page_title="Voharvod Calculator Bot", page_icon="ॐ")
 
-# Try to load the background if the image is present
 add_bg_from_local("mahadev.jpg")
 
-# Mobile-friendly title that centers beautifully on all screens
 st.markdown(
     "<h2 style='text-align: center; margin-bottom: 20px;'>ॐ Voharvod Calculator ॐ</h2>", 
     unsafe_allow_html=True
@@ -112,6 +111,12 @@ st.markdown(
 col1, col2 = st.columns(2)
 
 with col1:
+    person_name = st.text_input(
+        "Name (Optional)", 
+        placeholder="e.g. Shashank"
+    )
+    st.caption("📝 *Enter a name to personalize your calendar invite (e.g., 'Shashank's Kashmiri Birthday').*")
+    
     dob = st.date_input(
         "Actual Birth Date", 
         value=date(1990, 7, 14),
@@ -155,7 +160,15 @@ TIME_MAP = {
     "Night (After 8 PM)": time(22, 0)            
 }
 
+# Check if inputs changed—if they did, clear previous calculation state
+input_key = f"{person_name}-{dob}-{time_block}-{target_year}-{override_tithi_name}"
+if "last_input_key" in st.session_state and st.session_state.last_input_key != input_key:
+    if "calc_results" in st.session_state:
+        del st.session_state.calc_results
+
+# --- EXECUTE CALCULATION ON CLICK ---
 if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎️"):
+    st.session_state.last_input_key = input_key
     with st.spinner("Aligning birth data with Jantri..."):
         try:
             anchor_time = TIME_MAP[time_block]
@@ -171,10 +184,7 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
             b_paksha = "Gatta Pachh" if b_tithi > 15 else "Zoon Pachh"
             b_num = b_tithi - 15 if b_tithi > 15 else b_tithi
             
-            st.markdown("### 📋 Birth Profile")
-            st.info(f"**Target Tithi:** {MONTHS[b_m_idx]} {b_paksha} {TITHI_NAMES.get(b_num, str(b_num))}")
-            
-            st.divider()
+            tithi_string = f"{MONTHS[b_m_idx]} {b_paksha} {TITHI_NAMES.get(b_num, str(b_num))}"
             
             found_date = None
             start_search = date(target_year, 1, 1)
@@ -188,13 +198,94 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                         found_date = curr
                         break
             
-            if found_date:
-                st.success(f"### ✅ {target_year} Verdict")
-                st.balloons()
-                st.header(found_date.strftime('%A, %d %B %Y'))
-                st.caption(f"Matches {MONTHS[b_m_idx]} {b_paksha} {TITHI_NAMES.get(b_num, str(b_num))} at Sunrise.")
-            else:
-                st.error("Astronomical match not found. Please verify the year.")
+            st.session_state.calc_results = {
+                "success": found_date is not None,
+                "tithi_string": tithi_string,
+                "found_date": found_date,
+                "show_balloons": True
+            }
                 
         except Exception as e:
             st.error(f"Error: {e}")
+
+# --- RENDER RESULTS ---
+if "calc_results" in st.session_state:
+    res = st.session_state.calc_results
+    
+    if res["success"]:
+        tithi_string = res["tithi_string"]
+        found_date = res["found_date"]
+        
+        st.markdown("### 📋 Birth Profile")
+        st.info(f"**Target Tithi:** {tithi_string}")
+        
+        st.divider()
+        st.success(f"### ✅ {target_year} Verdict")
+        
+        if res["show_balloons"]:
+            st.balloons()
+            st.session_state.calc_results["show_balloons"] = False
+            
+        st.header(found_date.strftime('%A, %d %B %Y'))
+        st.caption(f"Matches {tithi_string} at Sunrise.")
+        
+        # Format dates cleanly
+        start_str = found_date.strftime("%Y%m%d")
+        gcal_end_str = (found_date + timedelta(days=1)).strftime("%Y%m%d")
+        
+        # Extract verdict short date string (e.g., "31Dec")
+        date_suffix = found_date.strftime("%d%b")
+        
+        # NEW: Append short date string to the event title dynamically
+        if person_name.strip():
+            first_name = person_name.strip().split()[0]
+            event_title = f"{first_name}'s Kashmiri Birthday {date_suffix}"
+        else:
+            event_title = f"Kashmiri Birthday {date_suffix}"
+            
+        event_details = f"Calculated Tithi: {tithi_string}"
+        
+        # 1. Google Link
+        gcal_url = (
+            f"https://calendar.google.com/calendar/render?action=TEMPLATE"
+            f"&text={urllib.parse.quote(event_title)}"
+            f"&dates={start_str}/{gcal_end_str}"
+            f"&details={urllib.parse.quote(event_details)}"
+        )
+        
+        # 2. Apple / Universal Content
+        ics_content = f"""BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Kashmiri Voharvod Calculator//EN
+BEGIN:VEVENT
+DTSTART;VALUE=DATE:{start_str}
+DURATION:P1D
+SUMMARY:{event_title}
+DESCRIPTION:{event_details}
+END:VEVENT
+END:VCALENDAR"""
+        
+        btn_col1, btn_col2 = st.columns(2)
+        
+        with btn_col1:
+            st.link_button("📅 Add to Google Calendar", gcal_url, use_container_width=True)
+            
+        with btn_col2:
+            st.download_button(
+                label="🍎 Add to Apple / Other Calendar",
+                data=ics_content.replace('\n', '\r\n'), 
+                file_name="voharvod.ics",
+                mime="text/calendar",
+                use_container_width=True
+            )
+    else:
+        st.error("Astronomical match not found. Please verify the year.")
+
+# --- PRIVACY DISCLAIMER ---
+st.divider()
+st.markdown(
+    "<p style='text-align: center; color: #888888; font-size: 13px;'>"
+    "🔒 <b>Privacy First:</b> This calculator runs safely in your browser. "
+    "We do not save, store, or track any names, birth dates, or personal information.</p>", 
+    unsafe_allow_html=True
+)

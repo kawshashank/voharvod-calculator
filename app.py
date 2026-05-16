@@ -98,13 +98,14 @@ def add_bg_from_local(image_file):
         )
 
 # --- APP UI ---
-st.set_page_config(page_title="Vijayshwar Voharvod Bot", page_icon="ॐ")
+st.set_page_config(page_title="Voharvod Calculator Bot", page_icon="ॐ")
 
 # Try to load the background if the image is present
 add_bg_from_local("mahadev.jpg")
 
+# Removed nowrap so it can fit on mobile screens, added centering, and updated text
 st.markdown(
-    "<h2 style='white-space: nowrap; margin-bottom: 20px;'>ॐ Vijayshwar Voharvod Calculator</h2>", 
+    "<h2 style='text-align: center; margin-bottom: 20px;'>ॐ Voharvod Calculator ॐ</h2>", 
     unsafe_allow_html=True
 )
 

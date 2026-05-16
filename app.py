@@ -75,25 +75,177 @@ def get_precise_panchang(check_date, exact_time=None):
         
     return tithi, month_idx
 
-# --- APP BACKGROUND SETUP ---
+# --- APP BACKGROUND & TITANIUM PRO UI SETUP ---
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         with open(image_file, "rb") as image:
             encoded_string = base64.b64encode(image.read()).decode()
         
+        # PRESET: PURE MONOCHROME TITANIUM PRO
         st.markdown(
         f"""
         <style>
+        /* Main Background Setup */
         .stApp {{
-            background-image: linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url(data:image/jpeg;base64,{encoded_string});
+            background-image: linear-gradient(rgba(248, 248, 250, 0.96), rgba(248, 248, 250, 0.96)), url(data:image/jpeg;base64,{encoded_string});
             background-size: cover;
             background-position: top center;
             background-repeat: no-repeat;
             background-attachment: fixed;
+            color: #121212;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
         }}
+        
+        /* Monochromatic Headings */
+        h1, h2, h3, .stHeader {{
+            color: #1C1C1E !important; 
+            font-weight: 700 !important;
+            border-bottom: 2px solid #E5E5EA;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }}
+        h2 {{ border-bottom: none; text-align: center; }}
+        h3 {{ margin-top: 30px; border-bottom: 1px solid rgba(0, 0, 0, 0.1);}}
+        
+        /* Structural Cards */
+        .stHorizontalBlock {{
+            background-color: #FDFDFD;
+            border: 1px solid #E5E5EA;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            margin-bottom: 25px;
+        }}
+        
+        /* INPUT BOXES: Clean, crisp borders */
+        div[data-baseweb="input"] > div, 
+        div[data-baseweb="select"] > div {{
+            background-color: #FFFFFF !important;
+            border: 1px solid #D1D1D6 !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
+            transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            color: #121212 !important;
+        }}
+        
+        /* Hover & Active: Titanium Grey accent */
+        div[data-baseweb="input"] > div:hover, 
+        div[data-baseweb="select"] > div:hover {{
+            border: 1px solid #8E8E93 !important; 
+        }}
+        div[data-baseweb="input"] > div:focus-within, 
+        div[data-baseweb="select"] > div:focus-within {{
+            border: 2px solid #3A3A3C !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+        }}
+        
+        /* PRIMARY BUTTON: Midnight Slate (Mature & Professional) */
+        .stButton > button {{
+            background-color: #1C1C1E !important;
+            color: #FFFFFF !important;
+            border: 1px solid #1C1C1E !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-size: 16px !important;
+            padding: 12px 24px !important;
+            width: 100% !important;
+            margin-top: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
+            transition: all 0.2s ease-in-out;
+        }}
+        .stButton > button:hover {{
+            background-color: #3A3A3C !important;
+            border: 1px solid #3A3A3C !important;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15) !important;
+        }}
+
+        /* Secondary Buttons (Calendars) */
+        .stDownloadButton > button, .stLinkButton > a {{
+            background-color: #F2F2F7 !important;
+            color: #1C1C1E !important;
+            border-radius: 8px !important;
+            border: 1px solid #D1D1D6 !important;
+            font-weight: 600 !important;
+            width: 100% !important;
+        }}
+        .stDownloadButton > button:hover, .stLinkButton > a:hover {{
+            background-color: #E5E5EA !important;
+            border: 1px solid #C7C7CC !important;
+        }}
+
+        /* Dark Mode: Pure Monochrome Pro Aesthetic */
         @media (prefers-color-scheme: dark) {{
             .stApp {{
-                background-image: linear-gradient(rgba(14, 17, 23, 0.95), rgba(14, 17, 23, 0.95)), url(data:image/jpeg;base64,{encoded_string});
+                background-image: linear-gradient(rgba(14, 14, 16, 0.95), rgba(14, 14, 16, 0.95)), url(data:image/jpeg;base64,{encoded_string});
+                color: #F2F2F7;
+            }}
+            
+            h1, h2, h3, .stHeader {{
+                color: #F8F8FA !important; 
+                border-bottom: 2px solid #3A3A3C;
+            }}
+            h3 {{ border-bottom: 1px solid #2C2C2E; }}
+            
+            .stHorizontalBlock {{
+                background-color: #1C1C1E;
+                border: 1px solid #2C2C2E;
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+            }}
+            
+            div[data-baseweb="input"] > div, 
+            div[data-baseweb="select"] > div {{
+                background-color: #2C2C2E !important;
+                border: 1px solid #48484A !important;
+                color: #F8F8FA !important;
+            }}
+            div[data-baseweb="input"] > div:hover, 
+            div[data-baseweb="select"] > div:hover {{
+                border: 1px solid #8E8E93 !important; 
+            }}
+            div[data-baseweb="input"] > div:focus-within, 
+            div[data-baseweb="select"] > div:focus-within {{
+                border: 2px solid #AEAEB2 !important;
+                box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05) !important;
+            }}
+
+            /* Primary Button in Dark Mode: Lighter Slate */
+            .stButton > button {{
+                background-color: #3A3A3C !important;
+                border: 1px solid #48484A !important;
+                color: #FFFFFF !important;
+            }}
+            .stButton > button:hover {{
+                background-color: #48484A !important;
+                border: 1px solid #636366 !important;
+            }}
+
+            /* Secondary Buttons in Dark Mode */
+            .stDownloadButton > button, .stLinkButton > a {{
+                background-color: #2C2C2E !important;
+                color: #F2F2F7 !important;
+                border: 1px solid #48484A !important;
+            }}
+            .stDownloadButton > button:hover, .stLinkButton > a:hover {{
+                background-color: #3A3A3C !important;
+                border: 1px solid #636366 !important;
+            }}
+
+            /* Clean Verdict Block */
+            .calc-success {{
+                background-color: #1C1C1E !important; 
+                border-left: 4px solid #8E8E93 !important; /* Subtle Titanium Accent */
+                color: #F8F8FA !important;
+                border-radius: 6px;
+                padding: 20px;
+                margin-top: 25px;
+                margin-bottom: 20px;
+            }}
+            .calc-success H1 {{
+                color: #FFFFFF !important;
+                font-weight: 700 !important;
+                border-bottom: none !important;
+                margin: 10px 0 !important;
+                text-shadow: 0px 2px 4px rgba(0,0,0,0.5) !important; /* Simple, clean drop shadow */
             }}
         }}
         </style>
@@ -136,7 +288,6 @@ if direct_mode:
 else:
     col1, col2 = st.columns(2)
     with col1:
-        # Changed default date to December 31, 2000
         dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today())
         time_block = st.selectbox("Approximate Time of Birth", ["Default (Safest bet)", "Early Morning (Before 8 AM)", "Late Morning (8 AM - 12 PM)", "Afternoon (12 PM - 4 PM)", "Evening (4 PM - 8 PM)", "Night (After 8 PM)"], index=0)
         
@@ -192,7 +343,9 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
             else:
                 if override_tithi_name != "Unknown / Calculate for me":
                     mode_flag = "override"
-                    b_tithi, b_m_idx = get_precise_panchang(dob, time(12, 0)) # Base month off 12pm
+                    # Capture the month based on a 12 PM check (midday)
+                    b_tithi, b_m_idx = get_precise_panchang(dob, time(12, 0)) 
+                    # Use specified tithi name, determine number
                     for num, name in TITHI_NAMES.items():
                         if name == override_tithi_name:
                             is_krishna = b_tithi > 15
@@ -200,17 +353,19 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                             break
                     profiles_to_check.append({"tithi": b_tithi, "m_idx": b_m_idx, "desc": "Override Selection"})
                 
-                # --- THE NEW WINDOW LOGIC FOR DEFAULT (12 PM to 10 PM) ---
+                # --- THE USER DEFINED DURATION LOGIC (12 PM to 10 PM) ---
                 elif time_block == "Default (Safest bet)":
                     t1, m1 = get_precise_panchang(dob, time(12, 0)) # 12 PM Check
                     t2, m2 = get_precise_panchang(dob, time(22, 0)) # 10 PM Check
                     
                     if t1 != t2 or m1 != m2:
                         mode_flag = "default_split"
+                        # Generate possibilities if transition found
                         profiles_to_check.append({"tithi": t1, "m_idx": m1, "desc": "Possibility 1 (Active around 12:00 PM)"})
                         profiles_to_check.append({"tithi": t2, "m_idx": m2, "desc": "Possibility 2 (Active around 10:00 PM)"})
                     else:
                         mode_flag = "default_single"
+                        # Standard default logic if no transition
                         profiles_to_check.append({"tithi": t1, "m_idx": m1, "desc": "Default Window"})
                 
                 # --- SPECIFIC TIME SELECTED ---
@@ -226,6 +381,7 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                 b_tithi = prof["tithi"]
                 b_m_idx = prof["m_idx"]
                 
+                # Map back to formal Kashmiri format for result display
                 b_paksha = "Gatta Pachh" if b_tithi > 15 else "Zoon Pachh"
                 b_num = b_tithi - 15 if b_tithi > 15 else b_tithi
                 tithi_string = f"{KASHMIRI_MONTHS.get(b_m_idx, 'Unknown')} {b_paksha} {TITHI_NAMES.get(b_num, str(b_num))}"
@@ -237,6 +393,7 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                 prev_date = None
                 prev_m_idx = None
                 
+                # Standard Search loop (with Kshaya Detector)
                 for d in range(0, 400):
                     curr = start_search + timedelta(days=d)
                     c_tithi, c_m_idx = get_precise_panchang(curr, exact_time=None)
@@ -247,6 +404,7 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                     if c_tithi == b_tithi:
                         is_match = True
                     elif prev_tithi is not None:
+                        # Kshaya (Skipped sunrise) Detector: Check intermediate tithis
                         def continuous(t): return t if t >= prev_tithi else t + 30
                         cont_c = continuous(c_tithi)
                         cont_b = continuous(b_tithi)
@@ -255,6 +413,7 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                             match_date = prev_date
                             
                     if is_match:
+                        # Append only if in the correct lunar month
                         if c_m_idx == b_m_idx or (prev_m_idx is not None and prev_m_idx == b_m_idx):
                             if match_date not in raw_matches:
                                 raw_matches.append(match_date)
@@ -263,14 +422,17 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                     prev_date = curr
                     prev_m_idx = c_m_idx
                 
+                # Group consecutive matches
                 events = []
                 for m in raw_matches:
                     if not events: events.append(m)
                     elif (m - events[-1]).days > 2: events.append(m)
                     else: events[-1] = m 
                         
+                # Filter for target year only
                 valid_events = [e for e in events if e.year == target_year or (e.year == target_year + 1 and e.month < 4)]
                 
+                # Resolve match (Leap month handling logic)
                 found_date = None
                 if valid_events:
                     found_date = valid_events[-1] 
@@ -297,56 +459,54 @@ if "calc_results" in st.session_state:
     res_data = st.session_state.calc_results
     mode = res_data["mode"]
     
-    # --- RENDER MESSAGING BASED ON MODE ---
+    # Render proactive messaging based on mode flag
     if mode == "default_split":
-        st.error("⚠️ **Sunset / Tithi Transition Detected!** A lunar phase changed between the 12:00 PM and 10:00 PM window on your actual birth date. To maintain transparency and ensure you have the right date, we have generated verdicts for both profiles below. Select the one that matches your known family profile.")
+        st.error("⚠️ **Sunrise / Sunset Incident Detected!** A traditional lunar day changed between the **12:00 PM and 10:00 PM window** on your actual birth date. To maintain transparency, we have generated verdicts for both possibilities below. Please select the one that matches your family Records.")
     elif mode == "default_single":
-        st.info("ℹ️ **Note:** This profile is calculated using a default birth time window of **12:00 PM to 10:00 PM**. If this doesn't match your exact known birthprofile, use the *Known Birth Tithi* dropdown above or the *Direct Profile* toggle.")
+        st.markdown("<p style='color: #8E8E93; font-size: 14px; margin-top: 10px; margin-bottom: 25px;'>ℹ️ **Note:** This birthday profile is calculated using a default birth time window of **12:00 PM to 10:00 PM**. If this doesn't match your known traditional profile, use the *Known Birth Tithi* or the *Direct Profile* toggle.</p>", unsafe_allow_html=True)
     
     if res_data["show_balloons"]:
         st.balloons()
         st.session_state.calc_results["show_balloons"] = False
 
-    # --- RENDER EACH GENERATED PROFILE ---
+    # --- CARD-LIKE RESULTS RENDERING ---
     for idx, r in enumerate(res_data["results"]):
         if r["success"]:
-            tithi_string = r["tithi_string"]
-            found_date = r["found_date"]
+            # Clean, structual rendering without flashy colors
+            st.markdown(f"""
+            <div class='result-block' style='margin-top:30px; border-bottom: 1px solid rgba(150, 150, 150, 0.2); padding-bottom: 30px;'>
+                <h3>📋 Profile: {r['desc']}</h3>
+                <p>Matches <strong>{r['tithi_string']}</strong> for this year.</p>
+                <div class='calc-success'>
+                    ✅<span style='font-weight:600; font-size:1.1rem; margin-left:10px;'> {target_year} Kashmiri Birthday</span>
+                    <h1>{r['found_date'].strftime('%A, %d %B %Y')}</h1>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
-            st.markdown(f"### 📋 Birth Profile: {r['desc']}")
-            st.info(f"**Target Tithi:** {tithi_string}")
-            
-            st.success(f"### ✅ {target_year} Verdict")
-            st.header(found_date.strftime('%A, %d %B %Y'))
-            
+            # Dynamic messaging within result card
             if r.get("is_leap_month"):
-                st.caption(f"🌟 **Leap Month Detected!** Automatically selected the pure 'Banamas' date for {tithi_string}.")
-            else:
-                st.caption(f"Matches {tithi_string} for this year.")
+                st.caption(f"🌟 **Leap Month Detected!** Automatically bridged the calendar gap to provide the pure 'Banamas' date for {r['tithi_string']}.")
             
-            start_str = found_date.strftime("%Y%m%d")
-            gcal_end_str = (found_date + timedelta(days=1)).strftime("%Y%m%d")
-            date_suffix = found_date.strftime("%d%b")
+            # Calendar Button generation (Pro layout)
+            btn_col1, btn_col2 = st.columns(2)
             
-            if person_name.strip():
-                first_name = person_name.strip().split()[0]
-                event_title = f"{first_name}'s Kashmiri Birthday {date_suffix}"
-            else:
-                event_title = f"Kashmiri Birthday {date_suffix}"
-                
-            event_details = f"Calculated Tithi: {tithi_string}"
+            start_str = r['found_date'].strftime("%Y%m%d")
+            gcal_end_str = (r['found_date'] + timedelta(days=1)).strftime("%Y%m%d")
+            date_suffix = r['found_date'].strftime("%d%b")
+            
+            event_title = f"{person_name.strip().split()[0]}'s Kashmiri Birthday {date_suffix}" if person_name.strip() else f"Kashmiri Birthday {date_suffix}"
+            event_details = f"Traditional Profile: {r['tithi_string']}"
             
             gcal_url = f"https://calendar.google.com/calendar/render?action=TEMPLATE&text={urllib.parse.quote(event_title)}&dates={start_str}/{gcal_end_str}&details={urllib.parse.quote(event_details)}"
-            ics_content = f"BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Kashmiri Voharvod Calculator//EN\nBEGIN:VEVENT\nDTSTART;VALUE=DATE:{start_str}\nDURATION:P1D\nSUMMARY:{event_title}\nDESCRIPTION:{event_details}\nEND:VEVENT\nEND:VCALENDAR"
+            ics_content = f"BEGIN:VCALENDAR\\nVERSION:2.0\\nPRODID:-//Kashmiri Voharvod Calculator Pro//EN\\nBEGIN:VEVENT\\nDTSTART;VALUE=DATE:{start_str}\\nDURATION:P1D\\nSUMMARY:{event_title}\\nDESCRIPTION:{event_details}\\nEND:VEVENT\\nEND:VCALENDAR"
             
-            btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
                 st.link_button("📅 Add to Google Calendar", gcal_url, use_container_width=True, key=f"gcal_{idx}")
             with btn_col2:
-                st.download_button("🍎 Add to Apple / Other Calendar", data=ics_content.replace('\n', '\r\n'), file_name=f"voharvod_{idx}.ics", mime="text/calendar", use_container_width=True, key=f"ics_{idx}")
+                st.download_button("🍎 Add to Apple / Outlook Calendar", data=ics_content.replace('\\n', '\r\n'), file_name=f"voharvod_{idx}.ics", mime="text/calendar", use_container_width=True, key=f"ics_{idx}")
             
-            st.divider()
         else:
-            st.error(f"Astronomical match not found for {r['desc']}. Please verify the year.")
+            st.error(f"Astronomical match not found for possibility: {r['desc']}. Please verify the target year.")
 
 st.markdown("<p style='text-align: center; color: #888888; font-size: 13px;'>🔒 <b>Privacy First:</b> This calculator runs safely in your browser. We do not save, store, or track any names, birth dates, or personal information.</p>", unsafe_allow_html=True)

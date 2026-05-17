@@ -195,16 +195,14 @@ def welcome_guide():
     *Once your date is calculated, you can instantly sync it to your Apple or Google Calendar.*
     """)
     if st.button("Get Started ✨", use_container_width=True):
-        st.session_state.guide_shown = True
         st.rerun()
 
 st.set_page_config(page_title="Voharvod Calculator Bot", page_icon="ॐ")
 add_bg_from_local("mahadev.jpg")
 
+# --- THE FIX: Mark as shown immediately before calling it ---
 if "guide_shown" not in st.session_state:
-    st.session_state.guide_shown = False
-
-if not st.session_state.guide_shown:
+    st.session_state.guide_shown = True
     welcome_guide()
 
 st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'> Voharvod Calculator </h2>", unsafe_allow_html=True)
@@ -345,7 +343,6 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                 b_num = b_tithi - 15 if b_tithi > 15 else b_tithi
                 tithi_string = f"{KASHMIRI_MONTHS.get(b_m_idx, 'Unknown')} {b_paksha} {TITHI_NAMES.get(b_num, str(b_num))}"
                 
-                # --- THE FIX: PROXIMITY ANCHOR ALGORITHM ---
                 if dob:
                     if dob.month == 2 and dob.day == 29:
                         expected_anchor = date(target_year, 2, 28)
@@ -357,7 +354,6 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                         expected_month = 12
                     expected_anchor = date(target_year, expected_month, 15)
 
-                # Search exactly +/- 100 days around the expected anchor to safely catch the cycle without hitting other years
                 start_search = expected_anchor - timedelta(days=100)
                 
                 raw_matches = []

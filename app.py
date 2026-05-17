@@ -165,11 +165,9 @@ def add_bg_from_local(image_file):
             .calc-success H1 {{ color: #FFFFFF !important; font-weight: 700 !important; border-bottom: none !important; margin: 10px 0 !important; text-shadow: 0px 2px 4px rgba(0,0,0,0.5) !important; }}
             div[data-testid="stModal"] > div[role="dialog"] {{ background-color: rgba(28, 28, 30, 0.65) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; }}
             
-            /* Dark mode highlight box */
             .highlight-matches {{ background-color: rgba(255, 255, 255, 0.05) !important; border-left: 4px solid #8E8E93 !important; }}
         }}
         
-        /* Light mode highlight box */
         .highlight-matches {{
             background-color: rgba(0, 0, 0, 0.03);
             border-left: 4px solid #8E8E93;
@@ -209,7 +207,6 @@ if "guide_shown" not in st.session_state:
 if not st.session_state.guide_shown:
     welcome_guide()
 
-# --- CLEAN HEADER ---
 st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'> Voharvod Calculator </h2>", unsafe_allow_html=True)
 
 col_top1, col_top2 = st.columns(2)
@@ -348,14 +345,27 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) â˜Žï¸
                 b_num = b_tithi - 15 if b_tithi > 15 else b_tithi
                 tithi_string = f"{KASHMIRI_MONTHS.get(b_m_idx, 'Unknown')} {b_paksha} {TITHI_NAMES.get(b_num, str(b_num))}"
                 
-                raw_matches = []
-                start_search = date(target_year, 1, 1)
+                # --- THE FIX: PROXIMITY ANCHOR ALGORITHM ---
+                if dob:
+                    if dob.month == 2 and dob.day == 29:
+                        expected_anchor = date(target_year, 2, 28)
+                    else:
+                        expected_anchor = date(target_year, dob.month, dob.day)
+                else:
+                    expected_month = (b_m_idx + 4) % 12
+                    if expected_month == 0:
+                        expected_month = 12
+                    expected_anchor = date(target_year, expected_month, 15)
+
+                # Search exactly +/- 100 days around the expected anchor to safely catch the cycle without hitting other years
+                start_search = expected_anchor - timedelta(days=100)
                 
+                raw_matches = []
                 prev_tithi = None
                 prev_date = None
                 prev_m_idx = None
                 
-                for d in range(0, 400):
+                for d in range(0, 200):
                     curr = start_search + timedelta(days=d)
                     c_tithi, c_m_idx = get_precise_panchang(curr, exact_time=None)
                     
@@ -387,17 +397,18 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) â˜Žï¸
                     elif (m - events[-1]).days > 2: events.append(m)
                     else: events[-1] = m 
                         
-                valid_events = [e for e in events if e.year == target_year or (e.year == target_year + 1 and e.month < 4)]
-                
                 found_date = None
-                if valid_events:
-                    found_date = valid_events[-1] 
+                is_leap_month = False
+                
+                if events:
+                    found_date = events[-1] 
+                    is_leap_month = len(events) > 1
                 
                 results_list.append({
                     "success": found_date is not None,
                     "tithi_string": tithi_string,
                     "found_date": found_date,
-                    "is_leap_month": len(valid_events) > 1,
+                    "is_leap_month": is_leap_month,
                     "desc": prof["desc"],
                     "nakshatra": prof.get("nakshatra"),
                     "rashi": prof.get("rashi"),

@@ -130,18 +130,18 @@ def add_bg_from_local(image_file):
         h2 {{ border-bottom: none; text-align: center; }}
         h3 {{ margin-top: 30px; border-bottom: 1px solid rgba(0, 0, 0, 0.1); padding-bottom: 15px;}}
         .stHorizontalBlock {{ background-color: #FDFDFD; border: 1px solid #E5E5EA; border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); margin-bottom: 25px; }}
-        div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {{
+        div[data-baseweb="input"] > div, div[data-baseweb="select"] > div, div[data-baseweb="textarea"] > div {{
             background-color: #FFFFFF !important; border: 1px solid #D1D1D6 !important; border-radius: 6px !important;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important; transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out; color: #121212 !important;
         }}
-        div[data-baseweb="input"] > div:hover, div[data-baseweb="select"] > div:hover {{ border: 1px solid #8E8E93 !important; }}
-        div[data-baseweb="input"] > div:focus-within, div[data-baseweb="select"] > div:focus-within {{ border: 2px solid #3A3A3C !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important; }}
+        div[data-baseweb="input"] > div:hover, div[data-baseweb="select"] > div:hover, div[data-baseweb="textarea"] > div:hover {{ border: 1px solid #8E8E93 !important; }}
+        div[data-baseweb="input"] > div:focus-within, div[data-baseweb="select"] > div:focus-within, div[data-baseweb="textarea"] > div:focus-within {{ border: 2px solid #3A3A3C !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important; }}
         .stButton > button {{
             background-color: #1C1C1E !important; color: #FFFFFF !important; border: 1px solid #1C1C1E !important; border-radius: 8px !important;
             font-weight: 600 !important; font-size: 16px !important; padding: 12px 24px !important; width: 100% !important; margin-top: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important; transition: all 0.2s ease-in-out;
         }}
         .stButton > button:hover {{ background-color: #3A3A3C !important; border: 1px solid #3A3A3C !important; box-shadow: 0 6px 15px rgba(0,0,0,0.15) !important; }}
-        .stDownloadButton > button, .stLinkButton > a {{ background-color: #F2F2F7 !important; color: #1C1C1E !important; border-radius: 8px !important; border: 1px solid #D1D1D6 !important; font-weight: 600 !important; width: 100% !important; }}
+        .stDownloadButton > button, .stLinkButton > a {{ background-color: #F2F2F7 !important; color: #1C1C1E !important; border-radius: 8px !important; border: 1px solid #D1D1D6 !important; font-weight: 600 !important; width: 100% !important; display: flex; justify-content: center; align-items: center; text-decoration: none; }}
         div[data-testid="stModal"] > div[role="dialog"] {{
             background-color: rgba(255, 255, 255, 0.7) !important; backdrop-filter: blur(20px) saturate(180%) !important; -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
             border: 1px solid rgba(255, 255, 255, 0.4) !important; border-radius: 16px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
@@ -155,9 +155,9 @@ def add_bg_from_local(image_file):
             h1, h2, h3, .stHeader {{ color: #F8F8FA !important; border-bottom: 2px solid #3A3A3C; }}
             h3 {{ border-bottom: 1px solid #2C2C2E; padding-bottom: 15px; }}
             .stHorizontalBlock {{ background-color: #1C1C1E; border: 1px solid #2C2C2E; }}
-            div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {{ background-color: #2C2C2E !important; border: 1px solid #48484A !important; color: #F8F8FA !important; }}
-            div[data-baseweb="input"] > div:hover, div[data-baseweb="select"] > div:hover {{ border: 1px solid #8E8E93 !important; }}
-            div[data-baseweb="input"] > div:focus-within, div[data-baseweb="select"] > div:focus-within {{ border: 2px solid #AEAEB2 !important; }}
+            div[data-baseweb="input"] > div, div[data-baseweb="select"] > div, div[data-baseweb="textarea"] > div {{ background-color: #2C2C2E !important; border: 1px solid #48484A !important; color: #F8F8FA !important; }}
+            div[data-baseweb="input"] > div:hover, div[data-baseweb="select"] > div:hover, div[data-baseweb="textarea"] > div:hover {{ border: 1px solid #8E8E93 !important; }}
+            div[data-baseweb="input"] > div:focus-within, div[data-baseweb="select"] > div:focus-within, div[data-baseweb="textarea"] > div:focus-within {{ border: 2px solid #AEAEB2 !important; }}
             .stButton > button {{ background-color: #3A3A3C !important; border: 1px solid #48484A !important; color: #FFFFFF !important; }}
             .stButton > button:hover {{ background-color: #48484A !important; border: 1px solid #636366 !important; }}
             .stDownloadButton > button, .stLinkButton > a {{ background-color: #2C2C2E !important; color: #F2F2F7 !important; border: 1px solid #48484A !important; }}
@@ -184,7 +184,7 @@ def add_bg_from_local(image_file):
 def welcome_guide():
     st.markdown("""
     **What does this app do?**
-    This tool accurately calculates your traditional Kashmiri lunar birthday (**Voharvod**) for any target year. It perfectly mirrors the authentic **Vijayshwar Jantri**, mathematically handling complex rules like *Adhik Maas* (Leap Months) and *Kshaya Tithis* (Skipped Sunrises).
+    This tool accurately calculates your traditional Kashmiri lunar birthday (**Voharvod**) for any year you choose. It perfectly mirrors the authentic **Vijayshwar Jantri**, mathematically handling complex rules like *Adhik Maas* (Leap Months) and *Kshaya Tithis* (Skipped Sunrises).
     
     ### 🔍 Important Fields to Know:
     - **Actual Birth Date:** Your standard English date of birth. *Providing this also calculates your Nakshatra and Rashi!*
@@ -197,10 +197,39 @@ def welcome_guide():
     if st.button("Get Started ✨", use_container_width=True):
         st.rerun()
 
+# --- FEEDBACK FORM DIALOG (Bulletproof Mailto Method) ---
+@st.dialog("💬 Support & Feedback")
+def feedback_form():
+    st.markdown("We are constantly improving! Let us know if you found a mismatch with the Jantri or have suggestions.")
+    
+    feedback_type = st.radio("What would you like to share?", ["Report an Incorrect Date", "General Feedback / Suggestion"])
+    user_email = st.text_input("Your Email Address (So we can reply!)", placeholder="name@example.com")
+    
+    if feedback_type == "Report an Incorrect Date":
+        dob_input = st.text_input("What is your actual Date of Birth?", placeholder="e.g., 22 Jan 1960")
+        expected_res = st.text_input("What is the Expected Result? (As per Jantri)", placeholder="e.g., 10 Feb 2026")
+        actual_res = st.text_input("What Result did the App give you?", placeholder="e.g., 30 Jan 2027")
+        extra_notes = st.text_area("Any other details? (Time of birth, Year being checked, etc.)")
+        
+        subject = "Bug Report: Voharvod Calculator"
+        body = f"User Email: {user_email}\n\n--- BUG REPORT ---\nActual DOB: {dob_input}\nExpected Result: {expected_res}\nApp Result: {actual_res}\n\nAdditional Notes:\n{extra_notes}"
+    else:
+        gen_feedback = st.text_area("Your Feedback / Suggestion")
+        
+        subject = "Feedback: Voharvod Calculator"
+        body = f"User Email: {user_email}\n\n--- FEEDBACK ---\n{gen_feedback}"
+        
+    st.info("Clicking the button below will safely open your device's Email App with these details pre-filled. Just hit send!")
+    
+    encoded_subject = urllib.parse.quote(subject)
+    encoded_body = urllib.parse.quote(body)
+    mailto_url = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
+    
+    st.link_button("📧 Open Email App to Send", mailto_url, use_container_width=True)
+
 st.set_page_config(page_title="Voharvod Calculator Bot", page_icon="ॐ")
 add_bg_from_local("mahadev.jpg")
 
-# --- THE FIX: Mark as shown immediately before calling it ---
 if "guide_shown" not in st.session_state:
     st.session_state.guide_shown = True
     welcome_guide()
@@ -212,7 +241,7 @@ with col_top1:
     person_name = st.text_input("Name (Optional)", placeholder="e.g. Shashank")
     st.caption("📝 *Enter a name to personalize your calendar invite.*")
 with col_top2:
-    target_year = st.number_input("Target Year", min_value=2024, max_value=2100, value=2026)
+    target_year = st.number_input("Find Kashmiri birthday for year", min_value=2024, max_value=2100, value=2026)
 
 st.divider()
 
@@ -236,7 +265,7 @@ if direct_mode:
 else:
     col1, col2 = st.columns(2)
     with col1:
-        dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today())
+        dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today(), format="DD/MM/YYYY")
         time_block = st.selectbox("Approximate Time of Birth", ["Default (Safest bet)", "Early Morning (Before 8 AM)", "Late Morning (8 AM - 12 PM)", "Afternoon (12 PM - 4 PM)", "Evening (4 PM - 8 PM)", "Night (After 8 PM)"], index=0)
         
         if time_block != "Default (Safest bet)":
@@ -444,7 +473,7 @@ if "calc_results" in st.session_state:
             
             desc_html = f"<p style='color: #8E8E93; font-weight: 600; font-size: 0.95rem; margin-top: 5px;'>{r['desc']}</p>" if r.get('desc') else ""
 
-            matches_highlight_html = f"<div class='highlight-matches'><span style='font-size: 1.05rem;'><strong>Matches:</strong> {r['tithi_string']} (for this year)</span></div>"
+            matches_highlight_html = f"<div class='highlight-matches'><span style='font-size: 1.05rem;'><strong>Matches:</strong> {r['tithi_string']} (for the requested year)</span></div>"
 
             html_block = f"""<div class='result-block' style='margin-top:30px; border-bottom: 1px solid rgba(150, 150, 150, 0.2); padding-bottom: 30px;'>
 <h3 style='margin-bottom: 0px;'>📋 Profile: {header_name}</h3>
@@ -482,7 +511,7 @@ if "calc_results" in st.session_state:
                 st.download_button("🍎 Add to Apple / Outlook Calendar", data=ics_content.replace('\n', '\r\n'), file_name=f"voharvod_{idx}.ics", mime="text/calendar", use_container_width=True, key=f"ics_{idx}")
             
         else:
-            st.error(f"Astronomical match not found. Please verify the target year.")
+            st.error(f"Astronomical match not found. Please verify the year selected.")
 
 # --- BOTTOM SHARE SECTION ---
 st.divider()
@@ -508,5 +537,12 @@ st.markdown(share_html_bottom, unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #8E8E93; font-size: 12px; margin-top:-5px; margin-bottom: 10px;'><i>To share on Instagram, copy the link below and paste it into your Story or DM!</i></p>", unsafe_allow_html=True)
 st.code(APP_URL, language=None)
 
-st.markdown("<p style='text-align: center; color: #888888; font-size: 13px; margin-top: 30px; margin-bottom: 5px;'>🔒 <b>Privacy First:</b> This calculator runs safely in your browser. We do not save, store, or track any names, birth dates, or personal information.</p>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #888888; font-size: 12px; margin-top: 0px;'>Created by Shashank Kaw</p>", unsafe_allow_html=True)
+# --- FEEDBACK BUTTON ---
+col_feed1, col_feed2, col_feed3 = st.columns([1, 2, 1])
+with col_feed2:
+    if st.button("💬 Share Feedback or Report an Issue", use_container_width=True):
+        feedback_form()
+
+st.markdown("<p style='text-align: center; color: #888888; font-size: 13px; margin-top: 30px; margin-bottom: 15px;'>🔒 <b>Privacy First:</b> This calculator runs safely in your browser. We do not save, store, or track any names, birth dates, or personal information.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888888; font-size: 12px; margin-top: 0px; margin-bottom: 4px;'>With traditional insights from Saroj Kaw</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #888888; font-size: 12px; margin-top: 0px;'>Built for our community by Shashank Kaw</p>", unsafe_allow_html=True)

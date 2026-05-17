@@ -39,7 +39,6 @@ NAKSHATRA_NAMES = [
     "Purva Bhadrapada", "Uttara Bhadrapada", "Revati"
 ]
 
-# Reverse lookup dictionaries for direct profile entry
 REVERSE_MONTHS = {v: k for k, v in KASHMIRI_MONTHS.items()}
 REVERSE_TITHIS = {v: k for k, v in TITHI_NAMES.items()}
 MONTH_OPTIONS = ["Chetra", "Vaisakh", "Zeth", "Haar", "Shravun", "Bhadrapeth", "Ashid", "Kartik", "Monjhor", "Poh", "Magh", "Phagun"]
@@ -49,7 +48,6 @@ SRINAGAR_SUNRISE_UTC = {
     7: 0.00, 8: 0.25, 9: 0.75, 10: 1.00, 11: 1.50, 12: 1.80
 }
 
-# --- THE ACCURATE ASTRONOMICAL ENGINE ---
 def get_precise_panchang(check_date, exact_time=None):
     year = check_date.year
     month = check_date.month
@@ -115,7 +113,6 @@ def get_astro_details(check_date, exact_time=None):
     
     return nakshatra_idx, rashi_idx
 
-# --- APP BACKGROUND & TITANIUM PRO UI SETUP ---
 def add_bg_from_local(image_file):
     if os.path.exists(image_file):
         with open(image_file, "rb") as image:
@@ -124,144 +121,89 @@ def add_bg_from_local(image_file):
         st.markdown(
         f"""
         <style>
-        /* Main Background Setup */
         .stApp {{
             background-image: linear-gradient(rgba(248, 248, 250, 0.96), rgba(248, 248, 250, 0.96)), url(data:image/jpeg;base64,{encoded_string});
-            background-size: cover;
-            background-position: top center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            color: #121212;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            background-size: cover; background-position: top center; background-repeat: no-repeat; background-attachment: fixed;
+            color: #121212; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
         }}
-        
-        /* Monochromatic Headings */
-        h1, h2, h3, .stHeader {{
-            color: #1C1C1E !important; 
-            font-weight: 700 !important;
-            border-bottom: 2px solid #E5E5EA;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }}
+        h1, h2, h3, .stHeader {{ color: #1C1C1E !important; font-weight: 700 !important; border-bottom: 2px solid #E5E5EA; padding-bottom: 10px; margin-bottom: 20px; }}
         h2 {{ border-bottom: none; text-align: center; }}
         h3 {{ margin-top: 30px; border-bottom: 1px solid rgba(0, 0, 0, 0.1); padding-bottom: 15px;}}
-        
-        /* Structural Cards */
-        .stHorizontalBlock {{
-            background-color: #FDFDFD;
-            border: 1px solid #E5E5EA;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-            margin-bottom: 25px;
+        .stHorizontalBlock {{ background-color: #FDFDFD; border: 1px solid #E5E5EA; border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); margin-bottom: 25px; }}
+        div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {{
+            background-color: #FFFFFF !important; border: 1px solid #D1D1D6 !important; border-radius: 6px !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important; transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out; color: #121212 !important;
         }}
-        
-        /* INPUT BOXES: Clean, crisp borders */
-        div[data-baseweb="input"] > div, 
-        div[data-baseweb="select"] > div {{
-            background-color: #FFFFFF !important;
-            border: 1px solid #D1D1D6 !important;
-            border-radius: 6px !important;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important;
-            transition: border 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            color: #121212 !important;
-        }}
-        
-        div[data-baseweb="input"] > div:hover, 
-        div[data-baseweb="select"] > div:hover {{
-            border: 1px solid #8E8E93 !important; 
-        }}
-        div[data-baseweb="input"] > div:focus-within, 
-        div[data-baseweb="select"] > div:focus-within {{
-            border: 2px solid #3A3A3C !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-        }}
-        
-        /* PRIMARY BUTTON */
+        div[data-baseweb="input"] > div:hover, div[data-baseweb="select"] > div:hover {{ border: 1px solid #8E8E93 !important; }}
+        div[data-baseweb="input"] > div:focus-within, div[data-baseweb="select"] > div:focus-within {{ border: 2px solid #3A3A3C !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important; }}
         .stButton > button {{
-            background-color: #1C1C1E !important;
-            color: #FFFFFF !important;
-            border: 1px solid #1C1C1E !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            font-size: 16px !important;
-            padding: 12px 24px !important;
-            width: 100% !important;
-            margin-top: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
-            transition: all 0.2s ease-in-out;
+            background-color: #1C1C1E !important; color: #FFFFFF !important; border: 1px solid #1C1C1E !important; border-radius: 8px !important;
+            font-weight: 600 !important; font-size: 16px !important; padding: 12px 24px !important; width: 100% !important; margin-top: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important; transition: all 0.2s ease-in-out;
         }}
-        .stButton > button:hover {{
-            background-color: #3A3A3C !important;
-            border: 1px solid #3A3A3C !important;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15) !important;
-        }}
-
-        /* Secondary Buttons */
-        .stDownloadButton > button, .stLinkButton > a {{
-            background-color: #F2F2F7 !important;
-            color: #1C1C1E !important;
-            border-radius: 8px !important;
-            border: 1px solid #D1D1D6 !important;
-            font-weight: 600 !important;
-            width: 100% !important;
-        }}
-
-        /* TRANSPARENT MODAL / GUIDE WINDOW SETTINGS */
+        .stButton > button:hover {{ background-color: #3A3A3C !important; border: 1px solid #3A3A3C !important; box-shadow: 0 6px 15px rgba(0,0,0,0.15) !important; }}
+        .stDownloadButton > button, .stLinkButton > a {{ background-color: #F2F2F7 !important; color: #1C1C1E !important; border-radius: 8px !important; border: 1px solid #D1D1D6 !important; font-weight: 600 !important; width: 100% !important; }}
         div[data-testid="stModal"] > div[role="dialog"] {{
-            background-color: rgba(255, 255, 255, 0.7) !important;
-            backdrop-filter: blur(20px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.4) !important;
-            border-radius: 16px !important;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
+            background-color: rgba(255, 255, 255, 0.7) !important; backdrop-filter: blur(20px) saturate(180%) !important; -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.4) !important; border-radius: 16px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
+        }}
+        
+        /* THE FIX: Absolute Floating Icons safe from Streamlit Header */
+        .float-share-top-right {{
+            position: fixed;
+            top: 70px; /* Safely below Streamlit's hidden navbar */
+            right: 20px;
+            z-index: 999999; /* Forces to the absolute front */
+            display: flex;
+            gap: 12px;
+        }}
+        .top-icon-btn {{
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            transition: all 0.2s;
+            text-decoration: none;
+        }}
+        .top-icon-btn:hover {{ opacity: 0.85; transform: scale(1.1); box-shadow: 0 6px 14px rgba(0,0,0,0.3); }}
+        .top-icon-btn svg {{ width: 22px; height: 22px; fill: white; }}
+
+        /* Mobile Adjustments for Top Bar */
+        @media (max-width: 768px) {{
+            .float-share-top-right {{
+                top: 65px;
+                right: 15px;
+                gap: 10px;
+            }}
+            .top-icon-btn {{
+                width: 36px; height: 36px;
+            }}
+            .top-icon-btn svg {{ width: 18px; height: 18px; }}
         }}
 
-        /* Dark Mode */
+        /* Bottom Share Animation */
+        .share-btn-bottom:hover {{ opacity: 0.85; transform: scale(1.02); }}
+        .share-btn-bottom:active {{ transform: scale(0.98); }}
+
         @media (prefers-color-scheme: dark) {{
-            .stApp {{
-                background-image: linear-gradient(rgba(14, 14, 16, 0.95), rgba(14, 14, 16, 0.95)), url(data:image/jpeg;base64,{encoded_string});
-                color: #F2F2F7;
-            }}
+            .stApp {{ background-image: linear-gradient(rgba(14, 14, 16, 0.95), rgba(14, 14, 16, 0.95)), url(data:image/jpeg;base64,{encoded_string}); color: #F2F2F7; }}
             h1, h2, h3, .stHeader {{ color: #F8F8FA !important; border-bottom: 2px solid #3A3A3C; }}
             h3 {{ border-bottom: 1px solid #2C2C2E; padding-bottom: 15px; }}
-            
             .stHorizontalBlock {{ background-color: #1C1C1E; border: 1px solid #2C2C2E; }}
-            
-            div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {{
-                background-color: #2C2C2E !important; border: 1px solid #48484A !important; color: #F8F8FA !important;
-            }}
+            div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {{ background-color: #2C2C2E !important; border: 1px solid #48484A !important; color: #F8F8FA !important; }}
             div[data-baseweb="input"] > div:hover, div[data-baseweb="select"] > div:hover {{ border: 1px solid #8E8E93 !important; }}
             div[data-baseweb="input"] > div:focus-within, div[data-baseweb="select"] > div:focus-within {{ border: 2px solid #AEAEB2 !important; }}
-
             .stButton > button {{ background-color: #3A3A3C !important; border: 1px solid #48484A !important; color: #FFFFFF !important; }}
             .stButton > button:hover {{ background-color: #48484A !important; border: 1px solid #636366 !important; }}
-
             .stDownloadButton > button, .stLinkButton > a {{ background-color: #2C2C2E !important; color: #F2F2F7 !important; border: 1px solid #48484A !important; }}
-            
-            .calc-success {{
-                background-color: #1C1C1E !important; 
-                border-left: 4px solid #8E8E93 !important; 
-                color: #F8F8FA !important;
-                border-radius: 6px; padding: 20px; margin-top: 25px; margin-bottom: 20px;
-            }}
-            .calc-success H1 {{
-                color: #FFFFFF !important; font-weight: 700 !important; border-bottom: none !important; margin: 10px 0 !important;
-                text-shadow: 0px 2px 4px rgba(0,0,0,0.5) !important; 
-            }}
-            
-            /* Dark Mode Transparent Guide Overlay */
-            div[data-testid="stModal"] > div[role="dialog"] {{
-                background-color: rgba(28, 28, 30, 0.65) !important;
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            }}
+            .calc-success {{ background-color: #1C1C1E !important; border-left: 4px solid #8E8E93 !important; color: #F8F8FA !important; border-radius: 6px; padding: 20px; margin-top: 25px; margin-bottom: 20px; }}
+            .calc-success H1 {{ color: #FFFFFF !important; font-weight: 700 !important; border-bottom: none !important; margin: 10px 0 !important; text-shadow: 0px 2px 4px rgba(0,0,0,0.5) !important; }}
+            div[data-testid="stModal"] > div[role="dialog"] {{ background-color: rgba(28, 28, 30, 0.65) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; }}
         }}
         </style>
         """,
         unsafe_allow_html=True
         )
 
-# --- WELCOME GUIDE DIALOG ---
 @st.dialog("🙏 Welcome to the Voharvod Calculator")
 def welcome_guide():
     st.markdown("""
@@ -272,7 +214,7 @@ def welcome_guide():
     - **Actual Birth Date:** Your standard English date of birth. *Providing this also calculates your Nakshatra and Rashi!*
     - **Approximate Time:** In the lunar calendar, a day can change in the middle of the afternoon. If unsure, leave it on **Default** — the app will safely check a wide window (12 PM to 10 PM) to prevent errors.
     - **Known Birth Tithi:** If you already know your exact lunar phase (e.g., *Ashtami*), select it here.
-    - **🔄 Direct Profile Toggle:** Don't know your English birth date? Flip this switch to directly construct your Kashmiri birth profile (e.g., *Chetra Gatta Pachh Dahom*).
+    - **🔄 Direct Profile Toggle:** Don't know your English birth date? Flip this switch to directly construct your Kashmiri birth profile.
     
     *Once your date is calculated, you can instantly sync it to your Apple or Google Calendar.*
     """)
@@ -280,7 +222,6 @@ def welcome_guide():
         st.session_state.guide_shown = True
         st.rerun()
 
-# --- APP UI ---
 st.set_page_config(page_title="Voharvod Calculator Bot", page_icon="ॐ")
 add_bg_from_local("mahadev.jpg")
 
@@ -290,6 +231,27 @@ if "guide_shown" not in st.session_state:
 if not st.session_state.guide_shown:
     welcome_guide()
 
+# --- APP URL & SHARING LINKS CONFIGURATION ---
+APP_URL = "https://voharvod-alert.streamlit.app"
+whatsapp_msg = urllib.parse.quote(f"Check out the Kashmiri Voharvod Calculator! Save this link to easily find traditional birthdays: {APP_URL}")
+fb_url = urllib.parse.quote(APP_URL)
+
+# BRAND-COLORED ICONS (Simplified SVG paths for true icons)
+wa_svg = '<svg viewBox="0 0 448 512"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.6-30.6-37.9-3.2-5.5-.3-8.5 2.5-11.2 2.5-2.5 5.5-6.6 8.3-9.9 2.8-3.3 3.7-5.6 5.6-9.2 1.9-3.7.9-6.6-.5-9.2-1.4-2.8-12.5-30.1-17.1-41.1-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>'
+fb_svg = '<svg viewBox="0 0 512 512"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245.26V312.6h-66.38V256h66.38V212.87c0-65.51 38.89-101.62 98.45-101.62 28.53 0 58.31 5.1 58.31 5.1v64h-32.81c-32.36 0-42.48 20.06-42.48 40.63V256h72.06l-11.51 56.6h-60.55v188.66C413.31 482.38 504 379.78 504 256z"/></svg>'
+ig_svg = '<svg viewBox="0 0 448 512"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>'
+
+# --- TOP RIGHT FLOATING BAR (PAGE LEVEL) ---
+share_html_float = f"""
+<div class="float-share-top-right">
+    <a href="https://wa.me/?text={whatsapp_msg}" target="_blank" class="top-icon-btn" style="background-color: #25D366;" title="Share on WhatsApp">{wa_svg}</a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u={fb_url}" target="_blank" class="top-icon-btn" style="background-color: #1877F2;" title="Share on Facebook">{fb_svg}</a>
+    <a href="https://instagram.com" target="_blank" class="top-icon-btn" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);" title="Share on Instagram">{ig_svg}</a>
+</div>
+"""
+st.markdown(share_html_float, unsafe_allow_html=True)
+
+# --- CLEAN HEADER ---
 st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'> Voharvod Calculator </h2>", unsafe_allow_html=True)
 
 col_top1, col_top2 = st.columns(2)
@@ -354,7 +316,6 @@ if "last_input_key" in st.session_state and st.session_state.last_input_key != i
 
 st.divider()
 
-# --- EXECUTE CALCULATION ON CLICK ---
 if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎️"):
     st.session_state.last_input_key = input_key
     with st.spinner("Aligning birth data with Jantri..."):
@@ -494,7 +455,6 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
         except Exception as e:
             st.error(f"Error: {e}")
 
-# --- RENDER RESULTS ---
 if "calc_results" in st.session_state:
     res_data = st.session_state.calc_results
     mode = res_data["mode"]
@@ -510,7 +470,6 @@ if "calc_results" in st.session_state:
 
     for idx, r in enumerate(res_data["results"]):
         if r["success"]:
-            # Formatting the main heading dynamically
             header_name = f"{person_name.strip().split()[0]}'s Voharvod" if person_name.strip() else "Kashmiri Voharvod"
             
             astro_html = ""
@@ -518,8 +477,7 @@ if "calc_results" in st.session_state:
                 emoji = r.get('rashi_emoji', '🌙')
                 astro_html = f"<p style='color: #8E8E93; font-size: 0.95rem; margin-top: 10px; margin-bottom: 15px;'>{emoji} <strong>Rashi:</strong> {r['rashi']} &nbsp;|&nbsp; ✨ <strong>Nakshatra:</strong> {r['nakshatra']}</p>"
             
-            # Additional formatting if there is a split descriptor
-            desc_html = f"<p style='color: #D4AF37; font-weight: 600; font-size: 0.95rem; margin-top: 5px;'>{r['desc']}</p>" if r.get('desc') else ""
+            desc_html = f"<p style='color: #8E8E93; font-weight: 600; font-size: 0.95rem; margin-top: 5px;'>{r['desc']}</p>" if r.get('desc') else ""
 
             html_block = f"""<div class='result-block' style='margin-top:30px; border-bottom: 1px solid rgba(150, 150, 150, 0.2); padding-bottom: 30px;'>
 <h3 style='margin-bottom: 0px;'>📋 Profile: {header_name}</h3>
@@ -557,7 +515,26 @@ if "calc_results" in st.session_state:
                 st.download_button("🍎 Add to Apple / Outlook Calendar", data=ics_content.replace('\n', '\r\n'), file_name=f"voharvod_{idx}.ics", mime="text/calendar", use_container_width=True, key=f"ics_{idx}")
             
         else:
-            # Clean fallback for missing dates
             st.error(f"Astronomical match not found. Please verify the target year.")
 
-st.markdown("<p style='text-align: center; color: #888888; font-size: 13px;'>🔒 <b>Privacy First:</b> This calculator runs safely in your browser. We do not save, store, or track any names, birth dates, or personal information.</p>", unsafe_allow_html=True)
+# --- BOTTOM SHARE SECTION ---
+st.divider()
+st.markdown("<h3 style='text-align: center; border-bottom: none; margin-top: 0px;'>Share this App</h3>", unsafe_allow_html=True)
+
+wa_svg_small = '<svg viewBox="0 0 448 512" style="width: 18px; height: 18px; fill: white; margin-right: 8px; vertical-align: middle;"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.6-30.6-37.9-3.2-5.5-.3-8.5 2.5-11.2 2.5-2.5 5.5-6.6 8.3-9.9 2.8-3.3 3.7-5.6 5.6-9.2 1.9-3.7.9-6.6-.5-9.2-1.4-2.8-12.5-30.1-17.1-41.1-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>'
+fb_svg_small = '<svg viewBox="0 0 512 512" style="width: 18px; height: 18px; fill: white; margin-right: 8px; vertical-align: middle;"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245.26V312.6h-66.38V256h66.38V212.87c0-65.51 38.89-101.62 98.45-101.62 28.53 0 58.31 5.1 58.31 5.1v64h-32.81c-32.36 0-42.48 20.06-42.48 40.63V256h72.06l-11.51 56.6h-60.55v188.66C413.31 482.38 504 379.78 504 256z"/></svg>'
+ig_svg_small = '<svg viewBox="0 0 448 512" style="width: 18px; height: 18px; fill: white; margin-right: 8px; vertical-align: middle;"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>'
+
+share_html_bottom = f"""
+<div style="display: flex; gap: 12px; justify-content: center; margin-top: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+    <a href="https://wa.me/?text={whatsapp_msg}" target="_blank" class="share-btn-bottom" style="text-decoration: none; background-color: #25D366; color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.2s; white-space: nowrap;">{wa_svg_small}WhatsApp</a>
+    <a href="https://www.facebook.com/sharer/sharer.php?u={fb_url}" target="_blank" class="share-btn-bottom" style="text-decoration: none; background-color: #1877F2; color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.2s; white-space: nowrap;">{fb_svg_small}Facebook</a>
+    <a href="https://instagram.com" target="_blank" class="share-btn-bottom" style="text-decoration: none; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: all 0.2s; white-space: nowrap;">{ig_svg_small}Instagram</a>
+</div>
+"""
+st.markdown(share_html_bottom, unsafe_allow_html=True)
+
+st.markdown("<p style='text-align: center; color: #8E8E93; font-size: 12px; margin-top:-5px; margin-bottom: 10px;'><i>To share on Instagram, copy the link below and paste it into your Story or DM!</i></p>", unsafe_allow_html=True)
+st.code(APP_URL, language=None)
+
+st.markdown("<p style='text-align: center; color: #888888; font-size: 13px; margin-top: 30px;'>🔒 <b>Privacy First:</b> This calculator runs safely in your browser. We do not save, store, or track any names, birth dates, or personal information.</p>", unsafe_allow_html=True)

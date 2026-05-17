@@ -147,17 +147,26 @@ def add_bg_from_local(image_file):
             border: 1px solid rgba(255, 255, 255, 0.4) !important; border-radius: 16px !important; box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
         }}
         
-        /* THE FIX: Absolute Floating Icons safe from Streamlit Header */
-        .float-share-top-right {{
-            position: fixed;
-            top: 70px; /* Safely below Streamlit's hidden navbar */
-            right: 20px;
-            z-index: 999999; /* Forces to the absolute front */
+        /* THE FIX: Native document flow with strict right alignment to prevent centering capturing */
+        .top-share-container {{
+            width: 100%;
             display: flex;
+            justify-content: flex-end; /* Locks icons to the strict right */
             gap: 12px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            z-index: 1000;
         }}
+
+        /* Mobile adjustments for the naturally flowing bar */
+        @media (max-width: 768px) {{
+            .top-share-container {{
+                justify-content: space-between; /* On mobile, use space-between so they spread to the corners instead of overlapping text if it gets narrow */
+            }}
+        }}
+
         .top-icon-btn {{
-            width: 40px; height: 40px;
+            width: 36px; height: 36px;
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.25);
@@ -165,22 +174,8 @@ def add_bg_from_local(image_file):
             text-decoration: none;
         }}
         .top-icon-btn:hover {{ opacity: 0.85; transform: scale(1.1); box-shadow: 0 6px 14px rgba(0,0,0,0.3); }}
-        .top-icon-btn svg {{ width: 22px; height: 22px; fill: white; }}
+        .top-icon-btn svg {{ width: 18px; height: 18px; fill: white; }}
 
-        /* Mobile Adjustments for Top Bar */
-        @media (max-width: 768px) {{
-            .float-share-top-right {{
-                top: 65px;
-                right: 15px;
-                gap: 10px;
-            }}
-            .top-icon-btn {{
-                width: 36px; height: 36px;
-            }}
-            .top-icon-btn svg {{ width: 18px; height: 18px; }}
-        }}
-
-        /* Bottom Share Animation */
         .share-btn-bottom:hover {{ opacity: 0.85; transform: scale(1.02); }}
         .share-btn-bottom:active {{ transform: scale(0.98); }}
 
@@ -231,29 +226,26 @@ if "guide_shown" not in st.session_state:
 if not st.session_state.guide_shown:
     welcome_guide()
 
-# --- APP URL & SHARING LINKS CONFIGURATION ---
+# --- HEADER SECTION (SCROLLABLE & NON-OVERLAPPING) ---
 APP_URL = "https://voharvod-alert.streamlit.app"
 whatsapp_msg = urllib.parse.quote(f"Check out the Kashmiri Voharvod Calculator! Save this link to easily find traditional birthdays: {APP_URL}")
 fb_url = urllib.parse.quote(APP_URL)
 
-# BRAND-COLORED ICONS (Simplified SVG paths for true icons)
 wa_svg = '<svg viewBox="0 0 448 512"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.6-30.6-37.9-3.2-5.5-.3-8.5 2.5-11.2 2.5-2.5 5.5-6.6 8.3-9.9 2.8-3.3 3.7-5.6 5.6-9.2 1.9-3.7.9-6.6-.5-9.2-1.4-2.8-12.5-30.1-17.1-41.1-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>'
 fb_svg = '<svg viewBox="0 0 512 512"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245.26V312.6h-66.38V256h66.38V212.87c0-65.51 38.89-101.62 98.45-101.62 28.53 0 58.31 5.1 58.31 5.1v64h-32.81c-32.36 0-42.48 20.06-42.48 40.63V256h72.06l-11.51 56.6h-60.55v188.66C413.31 482.38 504 379.78 504 256z"/></svg>'
 ig_svg = '<svg viewBox="0 0 448 512"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>'
 
-# --- TOP RIGHT FLOATING BAR (PAGE LEVEL) ---
-share_html_float = f"""
-<div class="float-share-top-right">
+header_html = f"""
+<div class="top-share-container">
     <a href="https://wa.me/?text={whatsapp_msg}" target="_blank" class="top-icon-btn" style="background-color: #25D366;" title="Share on WhatsApp">{wa_svg}</a>
     <a href="https://www.facebook.com/sharer/sharer.php?u={fb_url}" target="_blank" class="top-icon-btn" style="background-color: #1877F2;" title="Share on Facebook">{fb_svg}</a>
     <a href="https://instagram.com" target="_blank" class="top-icon-btn" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);" title="Share on Instagram">{ig_svg}</a>
 </div>
+<h2 style='text-align: center; margin-top: 10px; margin-bottom: 20px; white-space: nowrap;'> Voharvod Calculator </h2>
 """
-st.markdown(share_html_float, unsafe_allow_html=True)
+st.markdown(header_html, unsafe_allow_html=True)
 
-# --- CLEAN HEADER ---
-st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'> Voharvod Calculator </h2>", unsafe_allow_html=True)
-
+# --- CALCULATOR BODY ---
 col_top1, col_top2 = st.columns(2)
 with col_top1:
     person_name = st.text_input("Name (Optional)", placeholder="e.g. Shashank")

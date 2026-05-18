@@ -219,42 +219,138 @@ def welcome_guide():
         st.session_state["welcome_guide_dismissed"] = True
         st.rerun()
 
-# --- ACCURATE COMPILATION ONE-CLICK FEEDBACK POPUP ---
+# --- OFFICIAL COMPONENT-WRAPPED FEEDBACK BOX ---
 @st.dialog("💬 Support & Feedback")
 def feedback_form():
-    st.markdown("We are constantly improving! Let us know if you found a mismatch with the Jantri or have suggestions.")
-    feedback_type = st.radio("What would you like to share?", ["Report an Incorrect Date", "General Feedback / Suggestion"])
+    st.components.v1.html("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        margin: 0; padding: 5px;
+        background-color: transparent;
+    }
+    .fb-container { display: flex; flex-direction: column; gap: 14px; }
+    .fb-label { font-weight: 600; font-size: 14px; color: #1C1C1E; margin-bottom: 4px; display: block; }
+    .fb-input, .fb-select, .fb-textarea {
+        width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #D1D1D6;
+        background-color: #FFFFFF; color: #121212; font-size: 14px; box-sizing: border-box;
+        font-family: inherit;
+    }
+    .fb-textarea { resize: none; }
+    .fb-btn {
+        background-color: #1C1C1E; color: white; padding: 12px; border: none;
+        border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;
+        width: 100%; margin-top: 5px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        font-family: inherit; transition: background-color 0.2s;
+    }
+    .fb-btn:hover { background-color: #3A3A3C; }
     
-    user_email = st.text_input("Your Email Address (So we can reply!)", placeholder="name@example.com")
-    if feedback_type == "Report an Incorrect Date":
-        dob_input = st.text_input("What is your actual Date of Birth?", placeholder="e.g., 22 Jan 1960")
-        expected_res = st.text_input("What is the Expected Result? (As per Jantri)", placeholder="e.g., 10 Feb 2026")
-        actual_res = st.text_input("What Result did the App give you?", placeholder="e.g., 30 Jan 2027")
-        extra_notes = st.text_area("Any other details? (Time of birth, Year being checked, etc.)")
+    @media (prefers-color-scheme: dark) {
+        body { color: #F8F8FA; }
+        .fb-label { color: #F8F8FA; }
+        .fb-input, .fb-select, .fb-textarea { background-color: #2C2C2E; border-color: #48484A; color: #F8F8FA; }
+        .fb-btn { background-color: #3A3A3C; border: 1px solid #48484A; }
+        .fb-btn:hover { background-color: #48484A; }
+    }
+    </style>
+    </head>
+    <body>
+    <div class="fb-container">
+        <div>
+            <label class="fb-label">What would you like to share?</label>
+            <select id="fb_type" class="fb-select" onchange="stToggleFields()">
+                <option value="general">General Feedback / Suggestion</option>
+                <option value="bug">Report an Incorrect Date</option>
+            </select>
+        </div>
         
-        subject = "Bug Report: Voharvod Calculator"
-        body = f"User Email: {user_email}\n\n--- BUG REPORT ---\nActual DOB: {dob_input}\nExpected Result: {expected_res}\nApp Result: {actual_res}\n\nAdditional Notes:\n{extra_notes}"
-    else:
-        gen_feedback = st.text_area("Your Feedback / Suggestion")
-        subject = "Feedback: Voharvod Calculator"
-        body = f"User Email: {user_email}\n\n--- FEEDBACK ---\n{gen_feedback}"
+        <div>
+            <label class="fb-label">Your Email Address (So we can reply!)</label>
+            <input type="email" id="fb_email" class="fb-input" placeholder="name@example.com">
+        </div>
         
-    st.markdown("<p style='color: #8E8E93; font-size: 13px; margin-top: 10px;'>Clicking the button below saves entries and forces your device to cleanly launch your email application window.</p>", unsafe_allow_html=True)
+        <div id="bug_fields" style="display: none; flex-direction: column; gap: 14px;">
+            <div>
+                <label class="fb-label">What is your actual Date of Birth?</label>
+                <input type="text" id="fb_dob" class="fb-input" placeholder="e.g., 22 Jan 1960">
+            </div>
+            <div>
+                <label class="fb-label">What is the Expected Result? (As per Jantri)</label>
+                <input type="text" id="fb_expected" class="fb-input" placeholder="e.g., 10 Feb 2026">
+            </div>
+            <div>
+                <label class="fb-label">What Result did the App give you?</label>
+                <input type="text" id="fb_actual" class="fb-input" placeholder="e.g., 30 Jan 2027">
+            </div>
+            <div>
+                <label class="fb-label">Any other details? (Time of birth, Year being checked, etc.)</label>
+                <textarea id="fb_notes" class="fb-textarea" rows="2" placeholder="Provide extra context here..."></textarea>
+            </div>
+        </div>
+        
+        <div id="general_fields" style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+                <label class="fb-label">Your Feedback / Suggestion</label>
+                <textarea id="fb_text" class="fb-textarea" rows="4" placeholder="Type your suggestion here..."></textarea>
+            </div>
+        </div>
+        
+        <button type="button" class="fb-btn" onclick="stSendFeedback()">✉️ Send Feedback via Email</button>
+    </div>
     
-    if st.button("✉️ Send Feedback via Email", use_container_width=True):
-        if not user_email.strip():
-            st.error("⚠️ Please provide your email address before sending.")
-        else:
-            encoded_subject = urllib.parse.quote(subject)
-            encoded_body = urllib.parse.quote(body)
-            mailto_url = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
+    <script>
+    function stToggleFields() {
+        var type = document.getElementById("fb_type").value;
+        if(type === "bug") {
+            document.getElementById("bug_fields").style.display = "flex";
+            document.getElementById("general_fields").style.display = "none";
+        } else {
+            document.getElementById("bug_fields").style.display = "none";
+            document.getElementById("general_fields").style.display = "flex";
+        }
+    }
+    
+    function stSendFeedback() {
+        var type = document.getElementById("fb_type").value;
+        var email = document.getElementById("fb_email").value.trim();
+        
+        if(!email) {
+            alert("⚠️ Please provide your email address before sending.");
+            return;
+        }
+        
+        var subject = "";
+        var body = "";
+        
+        if(type === "bug") {
+            subject = "Bug Report: Voharvod Calculator";
+            var dob = document.getElementById("fb_dob").value;
+            var expected = document.getElementById("fb_expected").value;
+            var actual = document.getElementById("fb_actual").value;
+            var notes = document.getElementById("fb_notes").value;
             
-            with st.spinner("Compiling message details..."):
-                ptime.sleep(1.0)
+            body = "User Email: " + email + "\\n\\n--- BUG REPORT ---\\nActual DOB: " + dob + "\\nExpected Result: " + expected + "\\nApp Result: " + actual + "\\n\\nAdditional Notes:\\n" + notes;
+        } else {
+            subject = "Feedback: Voharvod Calculator";
+            var text = document.getElementById("fb_text").value;
             
-            st.success("✅ Opening email application...")
-            # Sandbox-proof main frame DOM trigger injection to instantly force native protocol invocation
-            st.markdown(f'<img src="x" onerror="window.location.href=\'{mailto_url}\';" style="display:none;">', unsafe_allow_html=True)
+            if(!text.trim()) {
+                alert("⚠️ Please type your feedback message before sending.");
+                return;
+            }
+            body = "User Email: " + email + "\\n\\n--- FEEDBACK ---\\n" + text;
+        }
+        
+        var mailtoUrl = "mailto:kawshashank@gmail.com?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+        window.location.href = mailtoUrl;
+    }
+    </script>
+    </body>
+    </html>
+    """, height=560)
 
 # ─────────────────────────────────────────────────────────────
 #  MAIN APP INTERFACE LAYOUT

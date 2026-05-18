@@ -60,6 +60,11 @@ ASTRO_DETAILS = {
     }
 }
 
+TRANSITION_LABELS = {
+    "⚠️ Time Transition: If born before": "Before Transition",
+    "⚠️ Time Transition: If born after": "After Transition"
+}
+
 MONTH_OPTIONS = ["Chetra", "Vaisakh", "Zeth", "Haar", "Shravun", "Bhadrapeth", "Ashid", "Kartik", "Monjhor", "Poh", "Magh", "Phagun"]
 REVERSE_MONTHS = {v: k for k, v in KASHMIRI_MONTHS.items()}
 REVERSE_TITHIS = {v: k for k, v in TITHI_NAMES.items()}
@@ -246,20 +251,27 @@ def feedback_form():
 # ─────────────────────────────────────────────────────────────
 add_bg_from_local("mahadev.jpg")
 
-if "guide_shown" not in st.query_params:
+# Check if someone arrived through a shared link URL parameters
+has_shared_params = "month" in st.query_params and "paksha" in st.query_params and "tithi" in st.query_params
+
+if "guide_shown" not in st.query_params and not has_shared_params:
     welcome_guide()
 
-# Removed Om Icon cleanly from title string
 st.markdown("<h2 style='text-align: center; margin-bottom: 25px;'>Voharvod Calculator</h2>", unsafe_allow_html=True)
 
 col_top1, col_top2, col_top3 = st.columns(3)
 with col_top1:
     person_name = st.text_input("Name (Optional)", placeholder="e.g. Shashank")
 with col_top2:
-    target_year = st.number_input("Find Kashmiri birthday for year", min_value=2024, max_value=2100, value=2026)
+    # If shared params exist, inherit the target search year seamlessly
+    default_year = int(st.query_params["year"]) if "year" in st.query_params else 2026
+    target_year = st.number_input("Find Kashmiri birthday for year", min_value=2024, max_value=2100, value=default_year)
 
 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
-direct_mode = st.toggle("🔄 I don't know my exact birth date, but I know my Kashmiri Birth Profile")
+
+# Force the toggle active if shared URL parameters are parsed
+default_toggle = True if has_shared_params else False
+direct_mode = st.toggle("🔄 I don't know my exact birth date, but I know my Kashmiri Birth Profile", value=default_toggle)
 
 if direct_mode:
     with col_top3:
@@ -267,9 +279,15 @@ if direct_mode:
     
     st.info("Select your exact traditional birth profile below:")
     col_d1, col_d2, col_d3 = st.columns(3)
-    with col_d1: sel_month = st.selectbox("Month", MONTH_OPTIONS)
-    with col_d2: sel_paksha = st.selectbox("Paksha", ["Zoon Pachh (Bright)", "Gatta Pachh (Dark)"])
-    with col_d3: sel_tithi = st.selectbox("Tithi", list(TITHI_NAMES.values()))
+    
+    # Load defaults dynamically from the URL or fall back to array start index values
+    def_m = MONTH_OPTIONS.index(st.query_params["month"]) if has_shared_params and st.query_params["month"] in MONTH_OPTIONS else 0
+    def_p = ["Zoon Pachh (Bright)", "Gatta Pachh (Dark)"].index("Zoon Pachh (Bright)" if "Zoon" in st.query_params.get("paksha", "") else "Gatta Pachh (Dark)") if has_shared_params else 0
+    def_t = list(TITHI_NAMES.values()).index(st.query_params["tithi"]) if has_shared_params and st.query_params["tithi"] in TITHI_NAMES.values() else 7
+    
+    with col_d1: sel_month = st.selectbox("Month", MONTH_OPTIONS, index=def_m)
+    with col_d2: sel_paksha = st.selectbox("Paksha", ["Zoon Pachh (Bright)", "Gatta Pachh (Dark)"], index=def_p)
+    with col_d3: sel_tithi = st.selectbox("Tithi", list(TITHI_NAMES.values()), index=def_t)
     
     dob_calc = None
     time_block = "Default (Safest bet)"
@@ -297,9 +315,12 @@ with col_btn2:
     if st.button("💬 Feedback", use_container_width=True):
         feedback_form()
 
-if calc_triggered:
+# Automate triggering the calculation script instantly if landing from shared profile links
+if calc_triggered or has_shared_params:
     st.session_state["active_key"] = input_key
-    st.session_state["balloons_ready"] = True
+    # Only celebrate with balloons if they click manually, avoiding spamming link visitors
+    if calc_triggered:
+        st.session_state["balloons_ready"] = True
 
 # ─────────────────────────────────────────────────────────────
 #  CALCULATION ENGINE RUNTIME
@@ -375,7 +396,6 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                 p_paksha = "Gatta Pachh" if p["tithi"] > 15 else "Zoon Pachh"
                 tithi_str = f"{KASHMIRI_MONTHS[p['m_idx']]} {p_paksha} {TITHI_NAMES[b_num]}"
                 
-                # --- TRADITIONAL CALENDAR INVITE TITLE MAPPING LOOPS ---
                 date_suffix = f_date.strftime("%d %b")
                 if person_name.strip():
                     event_title = f"{person_name.strip()} Kashmiri Birthday {date_suffix}"
@@ -414,10 +434,8 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                 with col_b1: st.link_button("📅 Add to Google Calendar", gcal_url, use_container_width=True, key=f"gcal_{idx}")
                 with col_b2: st.download_button("📥 Download .ics (Apple / Outlook)", data=ics_data, file_name=f"voharvod_{idx}.ics", mime="text/calendar", use_container_width=True, key=f"ics_{idx}")
                 
-                # --- BULLETPROOF TRANSITION UPCOMING CHIP PARSER ---
                 with st.expander("📅 View Upcoming Birthdays (Next 5 Years)", expanded=False):
                     if p.get("desc"):
-                        # Safe text boundary checks to avoid index slicing errors with time timestamps
                         label_suffix = " (Before Transition)" if "before" in p["desc"].lower() else " (After Transition)"
                     else:
                         label_suffix = ""

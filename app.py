@@ -244,22 +244,26 @@ if "guide_shown" not in st.session_state:
 
 st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'> Voharvod Calculator </h2>", unsafe_allow_html=True)
 
-# --- NEW LAYOUT: Grouping Name, Year selection, and Birth Date in 3 top columns ---
+# Define columns first so we can make column 3 completely dynamic
 col_top1, col_top2, col_top3 = st.columns(3)
+
 with col_top1:
     person_name = st.text_input("Name (Optional)", placeholder="e.g. Shashank")
     st.caption("📝 *Enter a name to personalize reminders.*")
 with col_top2:
     target_year = st.number_input("Find Kashmiri birthday for year", min_value=2024, max_value=2100, value=2026)
-with col_top3:
-    # Anchor date created here for global use across modes
-    dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today(), format="DD/MM/YYYY")
 
 st.divider()
 
+# Put the toggle immediately below the main fields
 direct_mode = st.toggle("🔄 I don't know my exact birth date, but I know my Kashmiri Birth Profile")
 
+# --- SMART ALIGNMENT FIX: Handle Column 3 dynamically based on the toggle state ---
 if direct_mode:
+    with col_top3:
+        st.text_input("Actual Birth Date", value="N/A (Direct Profile Mode)", disabled=True)
+        st.caption("🔒 *Date entry disabled because Direct Profile is active.*")
+
     st.info("Select your exact traditional birth profile below:")
     col_d1, col_d2, col_d3 = st.columns(3)
     with col_d1:
@@ -269,13 +273,15 @@ if direct_mode:
     with col_d3:
         sel_tithi = st.selectbox("Tithi", list(TITHI_NAMES.values()))
         
-    # Overriding standard variables safely when Direct Mode is active
     dob_calc = None
     time_block = "Default (Safest bet)"
     override_tithi_name = "Unknown / Calculate for me"
     input_key = f"{person_name}-{target_year}-direct-{sel_month}-{sel_paksha}-{sel_tithi}"
 
 else:
+    with col_top3:
+        dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today(), format="DD/MM/YYYY")
+    
     col1, col2 = st.columns(2)
     with col1:
         time_block = st.selectbox("Approximate Time of Birth", ["Default (Safest bet)", "Early Morning (Before 8 AM)", "Late Morning (8 AM - 12 PM)", "Afternoon (12 PM - 4 PM)", "Evening (4 PM - 8 PM)", "Night (After 8 PM)"], index=0)

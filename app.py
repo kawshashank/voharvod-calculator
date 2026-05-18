@@ -209,7 +209,7 @@ def welcome_guide():
     *Once your date is calculated, you can instantly sync it to your Apple or Google Calendar.*
     """)
     if st.button("Get Started ✨", use_container_width=True):
-        st.query_params["guide_shown"] = "true"
+        st.session_state["welcome_guide_dismissed"] = True
         st.rerun()
 
 @st.dialog("💬 Support & Feedback")
@@ -251,25 +251,28 @@ def feedback_form():
 # ─────────────────────────────────────────────────────────────
 add_bg_from_local("mahadev.jpg")
 
-# Check if someone arrived through a shared link URL parameters
+# Parse inbound shared URL parameter details
 has_shared_params = "month" in st.query_params and "paksha" in st.query_params and "tithi" in st.query_params
 
-if "guide_shown" not in st.query_params and not has_shared_params:
+# Bulletproof Welcome Guide triggers: don't reappear on 'X' clicks, completely bypassed for share-links
+if "welcome_guide_dismissed" not in st.session_state:
+    st.session_state["welcome_guide_dismissed"] = False
+
+if not st.session_state["welcome_guide_dismissed"] and not has_shared_params:
+    st.session_state["welcome_guide_dismissed"] = True
     welcome_guide()
 
 st.markdown("<h2 style='text-align: center; margin-bottom: 25px;'>Voharvod Calculator</h2>", unsafe_allow_html=True)
 
 col_top1, col_top2, col_top3 = st.columns(3)
 with col_top1:
-    person_name = st.text_input("Name (Optional)", placeholder="e.g. Shashank")
+    default_name = st.query_params["name"] if "name" in st.query_params else ""
+    person_name = st.text_input("Name (Optional)", placeholder="e.g. Shashank", value=default_name)
 with col_top2:
-    # If shared params exist, inherit the target search year seamlessly
     default_year = int(st.query_params["year"]) if "year" in st.query_params else 2026
     target_year = st.number_input("Find Kashmiri birthday for year", min_value=2024, max_value=2100, value=default_year)
 
 st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
-
-# Force the toggle active if shared URL parameters are parsed
 default_toggle = True if has_shared_params else False
 direct_mode = st.toggle("🔄 I don't know my exact birth date, but I know my Kashmiri Birth Profile", value=default_toggle)
 
@@ -280,7 +283,6 @@ if direct_mode:
     st.info("Select your exact traditional birth profile below:")
     col_d1, col_d2, col_d3 = st.columns(3)
     
-    # Load defaults dynamically from the URL or fall back to array start index values
     def_m = MONTH_OPTIONS.index(st.query_params["month"]) if has_shared_params and st.query_params["month"] in MONTH_OPTIONS else 0
     def_p = ["Zoon Pachh (Bright)", "Gatta Pachh (Dark)"].index("Zoon Pachh (Bright)" if "Zoon" in st.query_params.get("paksha", "") else "Gatta Pachh (Dark)") if has_shared_params else 0
     def_t = list(TITHI_NAMES.values()).index(st.query_params["tithi"]) if has_shared_params and st.query_params["tithi"] in TITHI_NAMES.values() else 7
@@ -315,10 +317,8 @@ with col_btn2:
     if st.button("💬 Feedback", use_container_width=True):
         feedback_form()
 
-# Automate triggering the calculation script instantly if landing from shared profile links
 if calc_triggered or has_shared_params:
     st.session_state["active_key"] = input_key
-    # Only celebrate with balloons if they click manually, avoiding spamming link visitors
     if calc_triggered:
         st.session_state["balloons_ready"] = True
 
@@ -435,11 +435,7 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                 with col_b2: st.download_button("📥 Download .ics (Apple / Outlook)", data=ics_data, file_name=f"voharvod_{idx}.ics", mime="text/calendar", use_container_width=True, key=f"ics_{idx}")
                 
                 with st.expander("📅 View Upcoming Birthdays (Next 5 Years)", expanded=False):
-                    if p.get("desc"):
-                        label_suffix = " (Before Transition)" if "before" in p["desc"].lower() else " (After Transition)"
-                    else:
-                        label_suffix = ""
-                        
+                    label_suffix = " (Before Transition)" if p.get("desc") and "before" in p["desc"].lower() else " (After Transition)" if p.get("desc") else ""
                     st.write(f"Plan ahead! Here is when your Voharvod{label_suffix} falls in the coming years:")
                     for next_y in range(target_year + 1, target_year + 6):
                         ny_date, _ = find_voharvod_for_year(p["tithi"], p["m_idx"], next_y, dob_month=dob_calc.month if dob_calc else None, dob_day=dob_calc.day if dob_calc else None)
@@ -448,6 +444,8 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                             
                 with st.expander("🔗 Share this calculation with family"):
                     share_params = {"month": KASHMIRI_MONTHS[p['m_idx']], "paksha": p_paksha, "tithi": TITHI_NAMES[b_num], "year": str(target_year)}
+                    if person_name.strip():
+                        share_params["name"] = person_name.strip()
                     share_url = f"https://voharvod-alert.streamlit.app/?{urllib.parse.urlencode(share_params)}"
                     st.code(share_url, language=None)
             else:
@@ -487,12 +485,6 @@ st.markdown(f"""
 
 st.markdown("<p style='text-align: center; color: #8E8E93; font-size: 12px; margin-top:-5px; margin-bottom: 10px;'><i>To share on Instagram, copy the link below and paste it into your Story or DM!</i></p>", unsafe_allow_html=True)
 st.code(APP_URL, language=None)
-
-# --- FEEDBACK BUTTON LOCATION ---
-col_feed1, col_feed2, col_feed3 = st.columns([1, 2, 1])
-with col_feed2:
-    if st.button("💬 Share Feedback or Report an Issue", use_container_width=True, key="bottom_feedback_trigger"):
-        feedback_form()
 
 st.markdown("<p style='text-align: center; color: #888888; font-size: 13px; margin-top: 30px; margin-bottom: 15px;'>🔒 <b>Privacy First:</b> This calculator runs safely in your browser. We do not save, store, or track any names, birth dates, or personal information.</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #888888; font-size: 12px; margin-top: 0px; margin-bottom: 4px;'>With traditional insights from Saroj Kaw</p>", unsafe_allow_html=True)

@@ -244,12 +244,16 @@ if "guide_shown" not in st.session_state:
 
 st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'> Voharvod Calculator </h2>", unsafe_allow_html=True)
 
-col_top1, col_top2 = st.columns(2)
+# --- NEW LAYOUT: Grouping Name, Year selection, and Birth Date in 3 top columns ---
+col_top1, col_top2, col_top3 = st.columns(3)
 with col_top1:
     person_name = st.text_input("Name (Optional)", placeholder="e.g. Shashank")
-    st.caption("📝 *Enter a name to personalize your calendar invite.*")
+    st.caption("📝 *Enter a name to personalize reminders.*")
 with col_top2:
     target_year = st.number_input("Find Kashmiri birthday for year", min_value=2024, max_value=2100, value=2026)
+with col_top3:
+    # Anchor date created here for global use across modes
+    dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today(), format="DD/MM/YYYY")
 
 st.divider()
 
@@ -265,15 +269,15 @@ if direct_mode:
     with col_d3:
         sel_tithi = st.selectbox("Tithi", list(TITHI_NAMES.values()))
         
-    dob = None
-    time_block = None
-    override_tithi_name = None
+    # Overriding standard variables safely when Direct Mode is active
+    dob_calc = None
+    time_block = "Default (Safest bet)"
+    override_tithi_name = "Unknown / Calculate for me"
     input_key = f"{person_name}-{target_year}-direct-{sel_month}-{sel_paksha}-{sel_tithi}"
 
 else:
     col1, col2 = st.columns(2)
     with col1:
-        dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today(), format="DD/MM/YYYY")
         time_block = st.selectbox("Approximate Time of Birth", ["Default (Safest bet)", "Early Morning (Before 8 AM)", "Late Morning (8 AM - 12 PM)", "Afternoon (12 PM - 4 PM)", "Evening (4 PM - 8 PM)", "Night (After 8 PM)"], index=0)
         
         if time_block != "Default (Safest bet)":
@@ -290,6 +294,7 @@ else:
     sel_month = None
     sel_paksha = None
     sel_tithi = None
+    dob_calc = dob
     input_key = f"{person_name}-{target_year}-calc-{dob}-{time_block}-{override_tithi_name}"
 
 TIME_MAP = {
@@ -324,8 +329,8 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
             else:
                 if override_tithi_name != "Unknown / Calculate for me":
                     mode_flag = "override"
-                    b_tithi, b_m_idx = get_precise_panchang(dob, time(12, 0)) 
-                    n_idx, r_idx = get_astro_details(dob, time(12, 0))
+                    b_tithi, b_m_idx = get_precise_panchang(dob_calc, time(12, 0)) 
+                    n_idx, r_idx = get_astro_details(dob_calc, time(12, 0))
                     for num, name in TITHI_NAMES.items():
                         if name == override_tithi_name:
                             is_krishna = b_tithi > 15
@@ -334,8 +339,8 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                     profiles_to_check.append({"tithi": b_tithi, "m_idx": b_m_idx, "desc": None, "nakshatra": NAKSHATRA_NAMES[n_idx], "rashi": RASHI_NAMES[r_idx], "rashi_emoji": RASHI_EMOJIS[r_idx]})
                 
                 elif time_block == "Default (Safest bet)":
-                    t1, m1 = get_precise_panchang(dob, time(12, 0)) 
-                    t2, m2 = get_precise_panchang(dob, time(22, 0)) 
+                    t1, m1 = get_precise_panchang(dob_calc, time(12, 0)) 
+                    t2, m2 = get_precise_panchang(dob_calc, time(22, 0)) 
                     
                     if t1 != t2 or m1 != m2:
                         mode_flag = "default_split"
@@ -345,7 +350,7 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                         while low <= high:
                             mid = (low + high) // 2
                             test_t = time(mid // 60, mid % 60)
-                            t_test, m_test = get_precise_panchang(dob, test_t)
+                            t_test, m_test = get_precise_panchang(dob_calc, test_t)
                             if t_test != t1 or m_test != m1:
                                 transition_min = mid
                                 high = mid - 1
@@ -354,20 +359,20 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                                 
                         transition_time_str = time(transition_min // 60, transition_min % 60).strftime("%I:%M %p").lstrip("0")
                         
-                        n1, r1 = get_astro_details(dob, time(12, 0))
-                        n2, r2 = get_astro_details(dob, time(22, 0))
+                        n1, r1 = get_astro_details(dob_calc, time(12, 0))
+                        n2, r2 = get_astro_details(dob_calc, time(22, 0))
                         
                         profiles_to_check.append({"tithi": t1, "m_idx": m1, "desc": f"⚠️ Time Transition: If born before {transition_time_str}", "nakshatra": NAKSHATRA_NAMES[n1], "rashi": RASHI_NAMES[r1], "rashi_emoji": RASHI_EMOJIS[r1]})
                         profiles_to_check.append({"tithi": t2, "m_idx": m2, "desc": f"⚠️ Time Transition: If born after {transition_time_str}", "nakshatra": NAKSHATRA_NAMES[n2], "rashi": RASHI_NAMES[r2], "rashi_emoji": RASHI_EMOJIS[r2]})
                     else:
                         mode_flag = "default_single"
-                        n1, r1 = get_astro_details(dob, time(16, 0))
+                        n1, r1 = get_astro_details(dob_calc, time(16, 0))
                         profiles_to_check.append({"tithi": t1, "m_idx": m1, "desc": None, "nakshatra": NAKSHATRA_NAMES[n1], "rashi": RASHI_NAMES[r1], "rashi_emoji": RASHI_EMOJIS[r1]})
                 
                 else:
                     anchor_time = TIME_MAP[time_block]
-                    b_tithi, b_m_idx = get_precise_panchang(dob, exact_time=anchor_time)
-                    n1, r1 = get_astro_details(dob, exact_time=anchor_time)
+                    b_tithi, b_m_idx = get_precise_panchang(dob_calc, exact_time=anchor_time)
+                    n1, r1 = get_astro_details(dob_calc, exact_time=anchor_time)
                     profiles_to_check.append({"tithi": b_tithi, "m_idx": b_m_idx, "desc": None, "nakshatra": NAKSHATRA_NAMES[n1], "rashi": RASHI_NAMES[r1], "rashi_emoji": RASHI_EMOJIS[r1]})
 
             results_list = []
@@ -380,11 +385,11 @@ if st.button("Calculate My Kashmiri Birthday (Before relatives remind me!) ☎�
                 b_num = b_tithi - 15 if b_tithi > 15 else b_tithi
                 tithi_string = f"{KASHMIRI_MONTHS.get(b_m_idx, 'Unknown')} {b_paksha} {TITHI_NAMES.get(b_num, str(b_num))}"
                 
-                if dob:
-                    if dob.month == 2 and dob.day == 29:
+                if dob_calc:
+                    if dob_calc.month == 2 and dob_calc.day == 29:
                         expected_anchor = date(target_year, 2, 28)
                     else:
-                        expected_anchor = date(target_year, dob.month, dob.day)
+                        expected_anchor = date(target_year, dob_calc.month, dob_calc.day)
                 else:
                     expected_month = (b_m_idx + 4) % 12
                     if expected_month == 0:

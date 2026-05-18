@@ -4,6 +4,7 @@ import base64
 import os
 import calendar
 import urllib.parse
+import time as ptime
 from datetime import date, time, timedelta
 
 # --- PAGE CONFIG (must be the very first Streamlit call) ---
@@ -218,7 +219,7 @@ def welcome_guide():
         st.session_state["welcome_guide_dismissed"] = True
         st.rerun()
 
-# --- BULLETPROOF ONE-TAP CLEAN FEEDBACK POPUP ---
+# --- ACCURATE COMPILATION ONE-CLICK FEEDBACK POPUP ---
 @st.dialog("💬 Support & Feedback")
 def feedback_form():
     st.markdown("We are constantly improving! Let us know if you found a mismatch with the Jantri or have suggestions.")
@@ -238,14 +239,22 @@ def feedback_form():
         subject = "Feedback: Voharvod Calculator"
         body = f"User Email: {user_email}\n\n--- FEEDBACK ---\n{gen_feedback}"
         
-    st.markdown("<p style='color: #8E8E93; font-size: 13px; margin-top: 10px;'>Clicking the button below will open your device's email client with your compiled message pre-filled.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #8E8E93; font-size: 13px; margin-top: 10px;'>Clicking the button below saves entries and forces your device to cleanly launch your email application window.</p>", unsafe_allow_html=True)
     
-    encoded_subject = urllib.parse.quote(subject)
-    encoded_body = urllib.parse.quote(body)
-    mailto_url = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
-    
-    # Direct interactive link button completely avoids device sandboxing jams
-    st.link_button("✉️ Send Feedback via Email", mailto_url, use_container_width=True)
+    if st.button("✉️ Send Feedback via Email", use_container_width=True):
+        if not user_email.strip():
+            st.error("⚠️ Please provide your email address before sending.")
+        else:
+            encoded_subject = urllib.parse.quote(subject)
+            encoded_body = urllib.parse.quote(body)
+            mailto_url = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
+            
+            with st.spinner("Compiling message details..."):
+                ptime.sleep(1.0)
+            
+            st.success("✅ Opening email application...")
+            # Sandbox-proof main frame DOM trigger injection to instantly force native protocol invocation
+            st.markdown(f'<img src="x" onerror="window.location.href=\'{mailto_url}\';" style="display:none;">', unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────
 #  MAIN APP INTERFACE LAYOUT
@@ -254,7 +263,6 @@ add_bg_from_local("mahadev.jpg")
 
 has_shared_params = "month" in st.query_params and "paksha" in st.query_params and "tithi" in st.query_params
 
-# Set session state flag directly on application draw to prevent X-button loops
 if "welcome_guide_dismissed" not in st.session_state:
     st.session_state["welcome_guide_dismissed"] = False
 

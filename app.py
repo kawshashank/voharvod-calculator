@@ -234,7 +234,11 @@ def feedback_form():
     }
     .fb-container { display: flex; flex-direction: column; gap: 14px; }
     .fb-label { font-weight: 600; font-size: 14px; color: #1C1C1E; margin-bottom: 4px; display: block; }
-    .fb-input, .fb-select, .fb-textarea {
+    .fb-radio-label {
+        display: flex; align-items: center; gap: 8px; font-size: 14px;
+        cursor: pointer; padding: 4px 0; color: #121212;
+    }
+    .fb-input, .fb-textarea {
         width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #D1D1D6;
         background-color: #FFFFFF; color: #121212; font-size: 14px; box-sizing: border-box;
         font-family: inherit;
@@ -251,7 +255,8 @@ def feedback_form():
     @media (prefers-color-scheme: dark) {
         body { color: #F8F8FA; }
         .fb-label { color: #F8F8FA; }
-        .fb-input, .fb-select, .fb-textarea { background-color: #2C2C2E; border-color: #48484A; color: #F8F8FA; }
+        .fb-radio-label { color: #F8F8FA; }
+        .fb-input, .fb-textarea { background-color: #2C2C2E; border-color: #48484A; color: #F8F8FA; }
         .fb-btn { background-color: #3A3A3C; border: 1px solid #48484A; }
         .fb-btn:hover { background-color: #48484A; }
     }
@@ -261,10 +266,14 @@ def feedback_form():
     <div class="fb-container">
         <div>
             <label class="fb-label">What would you like to share?</label>
-            <select id="fb_type" class="fb-select" onchange="stToggleFields()">
-                <option value="general">General Feedback / Suggestion</option>
-                <option value="bug">Report an Incorrect Date</option>
-            </select>
+            <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
+                <label class="fb-radio-label">
+                    <input type="radio" name="fb_type_group" id="type_general" value="general" checked onchange="stToggleFields()"> General Feedback / Suggestion
+                </label>
+                <label class="fb-radio-label">
+                    <input type="radio" name="fb_type_group" id="type_bug" value="bug" onchange="stToggleFields()"> Report an Incorrect Date
+                </label>
+            </div>
         </div>
         
         <div>
@@ -303,7 +312,7 @@ def feedback_form():
     
     <script>
     function stToggleFields() {
-        var type = document.getElementById("fb_type").value;
+        var type = document.querySelector('input[name="fb_type_group"]:checked').value;
         if(type === "bug") {
             document.getElementById("bug_fields").style.display = "flex";
             document.getElementById("general_fields").style.display = "none";
@@ -314,7 +323,7 @@ def feedback_form():
     }
     
     function stSendFeedback() {
-        var type = document.getElementById("fb_type").value;
+        var type = document.querySelector('input[name="fb_type_group"]:checked').value;
         var email = document.getElementById("fb_email").value.trim();
         
         if(!email) {

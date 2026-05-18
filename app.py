@@ -219,7 +219,7 @@ def welcome_guide():
         st.session_state["welcome_guide_dismissed"] = True
         st.rerun()
 
-# --- MERGED ONE-CLICK FEEDBACK PROCESSING DIALOG ---
+# --- SANDBOX-PROOF MOBILE HYBRID FEEDBACK FORM ---
 @st.dialog("💬 Support & Feedback")
 def feedback_form():
     st.markdown("We are constantly improving! Let us know if you found a mismatch with the Jantri or have suggestions.")
@@ -234,9 +234,12 @@ def feedback_form():
     else:
         gen_feedback = st.text_area("Your Feedback / Suggestion")
         
-    if st.button("Send Feedback 🚀", use_container_width=True):
+    if "feedback_compiled_url" not in st.session_state:
+        st.session_state["feedback_compiled_url"] = None
+
+    if st.button("1. Compile My Message 🚀", use_container_width=True):
         if not user_email.strip():
-            st.error("⚠️ Please provide your email address before sending.")
+            st.error("⚠️ Please provide your email address before compiling.")
         else:
             if feedback_type == "Report an Incorrect Date":
                 subject = "Bug Report: Voharvod Calculator"
@@ -247,18 +250,15 @@ def feedback_form():
                 
             encoded_subject = urllib.parse.quote(subject)
             encoded_body = urllib.parse.quote(body)
-            mailto_url = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
-            
-            with st.spinner("Compiling details..."):
-                ptime.sleep(1.5)
-                
-            st.success("✅ Opening your device's email client...")
-            # Automatically open the email app via clean JavaScript injection
-            st.components.v1.html(f"""
-            <script>
-                window.parent.location.href = "{mailto_url}";
-            </script>
-            """, height=0)
+            st.session_state["feedback_compiled_url"] = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
+            st.rerun()
+
+    # Once parsed securely, reveal a true interactive link element to pass through mobile barriers safely
+    if st.session_state["feedback_compiled_url"]:
+        st.success("✅ Form compiled perfectly with no text data loss!")
+        st.link_button("2. 📧 Open Email Client to Send", st.session_state["feedback_compiled_url"], use_container_width=True)
+        # Clear local session configuration on completion to allow fresh form cycles
+        st.session_state["feedback_compiled_url"] = None
 
 # ─────────────────────────────────────────────────────────────
 #  MAIN APP INTERFACE LAYOUT
@@ -273,8 +273,6 @@ if "welcome_guide_dismissed" not in st.session_state:
 if not st.session_state["welcome_guide_dismissed"] and not has_shared_params:
     st.session_state["welcome_guide_dismissed"] = True
     welcome_guide()
-
-st.markdown("<h2 style='text-align: center; margin-bottom: 25px;'>Voharvod Calculator</h2>", unsafe_allow_html=True)
 
 col_top1, col_top2, col_top3 = st.columns(3)
 with col_top1:

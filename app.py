@@ -4,6 +4,7 @@ import base64
 import os
 import calendar
 import urllib.parse
+import time as ptime
 from datetime import date, time, timedelta
 
 # --- PAGE CONFIG (must be the very first Streamlit call) ---
@@ -185,6 +186,12 @@ def add_bg_from_local(image_file):
         .voharvod-card h1 {{ color: white !important; margin: 15px 0 5px 0 !important; font-size: 2.6rem !important; border: none !important; text-shadow: 0 2px 4px rgba(0,0,0,0.15); }}
         .badge-pill {{ background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-block; margin-bottom: 10px; }}
         .astro-strip {{ background: rgba(0,0,0,0.06); padding: 12px; border-radius: 8px; margin-top: 15px; font-size: 0.9rem; text-align: left; }}
+        
+        div[data-baseweb="select"] input {{
+            pointer-events: none !important;
+            caret-color: transparent !important;
+        }}
+        
         @media (prefers-color-scheme: dark) {{
             .stApp {{ background-image: linear-gradient(rgba(18, 18, 20, 0.96), rgba(18, 18, 20, 0.96)), url(data:image/jpeg;base64,{encoded_string}); color: #F2F2F7; }}
             h1, h2, h3 {{ color: #F8F8FA !important; }}
@@ -212,25 +219,24 @@ def welcome_guide():
         st.session_state["welcome_guide_dismissed"] = True
         st.rerun()
 
+# --- MERGED ONE-CLICK FEEDBACK PROCESSING DIALOG ---
 @st.dialog("💬 Support & Feedback")
 def feedback_form():
     st.markdown("We are constantly improving! Let us know if you found a mismatch with the Jantri or have suggestions.")
     feedback_type = st.radio("What would you like to share?", ["Report an Incorrect Date", "General Feedback / Suggestion"])
     
-    with st.form("feedback_inputs"):
-        user_email = st.text_input("Your Email Address (So we can reply!)", placeholder="name@example.com")
-        if feedback_type == "Report an Incorrect Date":
-            dob_input = st.text_input("What is your actual Date of Birth?", placeholder="e.g., 22 Jan 1960")
-            expected_res = st.text_input("What is the Expected Result? (As per Jantri)", placeholder="e.g., 10 Feb 2026")
-            actual_res = st.text_input("What Result did the App give you?", placeholder="e.g., 30 Jan 2027")
-            extra_notes = st.text_area("Any other details? (Time of birth, Year being checked, etc.)")
-        else:
-            gen_feedback = st.text_area("Your Feedback / Suggestion")
-        submitted = st.form_submit_button("1. Save Details 💾", use_container_width=True)
+    user_email = st.text_input("Your Email Address (So we can reply!)", placeholder="name@example.com")
+    if feedback_type == "Report an Incorrect Date":
+        dob_input = st.text_input("What is your actual Date of Birth?", placeholder="e.g., 22 Jan 1960")
+        expected_res = st.text_input("What is the Expected Result? (As per Jantri)", placeholder="e.g., 10 Feb 2026")
+        actual_res = st.text_input("What Result did the App give you?", placeholder="e.g., 30 Jan 2027")
+        extra_notes = st.text_area("Any other details? (Time of birth, Year being checked, etc.)")
+    else:
+        gen_feedback = st.text_area("Your Feedback / Suggestion")
         
-    if submitted:
+    if st.button("Send Feedback 🚀", use_container_width=True):
         if not user_email.strip():
-            st.error("⚠️ Please provide your email address inside the form before saving.")
+            st.error("⚠️ Please provide your email address before sending.")
         else:
             if feedback_type == "Report an Incorrect Date":
                 subject = "Bug Report: Voharvod Calculator"
@@ -243,18 +249,24 @@ def feedback_form():
             encoded_body = urllib.parse.quote(body)
             mailto_url = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
             
-            st.success("✅ Details saved successfully! Now click the button below to send the email.")
-            st.link_button("2. 📧 Open Email App to Send", mailto_url, use_container_width=True)
+            with st.spinner("Compiling details..."):
+                ptime.sleep(1.5)
+                
+            st.success("✅ Opening your device's email client...")
+            # Automatically open the email app via clean JavaScript injection
+            st.components.v1.html(f"""
+            <script>
+                window.parent.location.href = "{mailto_url}";
+            </script>
+            """, height=0)
 
 # ─────────────────────────────────────────────────────────────
 #  MAIN APP INTERFACE LAYOUT
 # ─────────────────────────────────────────────────────────────
 add_bg_from_local("mahadev.jpg")
 
-# Parse inbound shared URL parameter details
 has_shared_params = "month" in st.query_params and "paksha" in st.query_params and "tithi" in st.query_params
 
-# Bulletproof Welcome Guide triggers: don't reappear on 'X' clicks, completely bypassed for share-links
 if "welcome_guide_dismissed" not in st.session_state:
     st.session_state["welcome_guide_dismissed"] = False
 

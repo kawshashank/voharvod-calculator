@@ -4,7 +4,6 @@ import base64
 import os
 import calendar
 import urllib.parse
-import time as ptime
 from datetime import date, time, timedelta
 
 # --- PAGE CONFIG (must be the very first Streamlit call) ---
@@ -219,7 +218,7 @@ def welcome_guide():
         st.session_state["welcome_guide_dismissed"] = True
         st.rerun()
 
-# --- SANDBOX-PROOF MOBILE HYBRID FEEDBACK FORM ---
+# --- BULLETPROOF ONE-TAP CLEAN FEEDBACK POPUP ---
 @st.dialog("💬 Support & Feedback")
 def feedback_form():
     st.markdown("We are constantly improving! Let us know if you found a mismatch with the Jantri or have suggestions.")
@@ -231,34 +230,22 @@ def feedback_form():
         expected_res = st.text_input("What is the Expected Result? (As per Jantri)", placeholder="e.g., 10 Feb 2026")
         actual_res = st.text_input("What Result did the App give you?", placeholder="e.g., 30 Jan 2027")
         extra_notes = st.text_area("Any other details? (Time of birth, Year being checked, etc.)")
+        
+        subject = "Bug Report: Voharvod Calculator"
+        body = f"User Email: {user_email}\n\n--- BUG REPORT ---\nActual DOB: {dob_input}\nExpected Result: {expected_res}\nApp Result: {actual_res}\n\nAdditional Notes:\n{extra_notes}"
     else:
         gen_feedback = st.text_area("Your Feedback / Suggestion")
+        subject = "Feedback: Voharvod Calculator"
+        body = f"User Email: {user_email}\n\n--- FEEDBACK ---\n{gen_feedback}"
         
-    if "feedback_compiled_url" not in st.session_state:
-        st.session_state["feedback_compiled_url"] = None
-
-    if st.button("1. Compile My Message 🚀", use_container_width=True):
-        if not user_email.strip():
-            st.error("⚠️ Please provide your email address before compiling.")
-        else:
-            if feedback_type == "Report an Incorrect Date":
-                subject = "Bug Report: Voharvod Calculator"
-                body = f"User Email: {user_email}\n\n--- BUG REPORT ---\nActual DOB: {dob_input}\nExpected Result: {expected_res}\nApp Result: {actual_res}\n\nAdditional Notes:\n{extra_notes}"
-            else:
-                subject = "Feedback: Voharvod Calculator"
-                body = f"User Email: {user_email}\n\n--- FEEDBACK ---\n{gen_feedback}"
-                
-            encoded_subject = urllib.parse.quote(subject)
-            encoded_body = urllib.parse.quote(body)
-            st.session_state["feedback_compiled_url"] = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
-            st.rerun()
-
-    # Once parsed securely, reveal a true interactive link element to pass through mobile barriers safely
-    if st.session_state["feedback_compiled_url"]:
-        st.success("✅ Form compiled perfectly with no text data loss!")
-        st.link_button("2. 📧 Open Email Client to Send", st.session_state["feedback_compiled_url"], use_container_width=True)
-        # Clear local session configuration on completion to allow fresh form cycles
-        st.session_state["feedback_compiled_url"] = None
+    st.markdown("<p style='color: #8E8E93; font-size: 13px; margin-top: 10px;'>Clicking the button below will open your device's email client with your compiled message pre-filled.</p>", unsafe_allow_html=True)
+    
+    encoded_subject = urllib.parse.quote(subject)
+    encoded_body = urllib.parse.quote(body)
+    mailto_url = f"mailto:kawshashank@gmail.com?subject={encoded_subject}&body={encoded_body}"
+    
+    # Direct interactive link button completely avoids device sandboxing jams
+    st.link_button("✉️ Send Feedback via Email", mailto_url, use_container_width=True)
 
 # ─────────────────────────────────────────────────────────────
 #  MAIN APP INTERFACE LAYOUT
@@ -267,12 +254,15 @@ add_bg_from_local("mahadev.jpg")
 
 has_shared_params = "month" in st.query_params and "paksha" in st.query_params and "tithi" in st.query_params
 
+# Set session state flag directly on application draw to prevent X-button loops
 if "welcome_guide_dismissed" not in st.session_state:
     st.session_state["welcome_guide_dismissed"] = False
 
 if not st.session_state["welcome_guide_dismissed"] and not has_shared_params:
     st.session_state["welcome_guide_dismissed"] = True
     welcome_guide()
+
+st.markdown("<h2 style='text-align: center; margin-bottom: 25px;'>Voharvod Calculator</h2>", unsafe_allow_html=True)
 
 col_top1, col_top2, col_top3 = st.columns(3)
 with col_top1:
@@ -483,7 +473,7 @@ fb_url = urllib.parse.quote(APP_URL)
 
 WA_SVG = '<svg viewBox="0 0 448 512" style="width:18px;height:18px;fill:white;margin-right:8px;vertical-align:middle;"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.6-30.6-37.9-3.2-5.5-.3-8.5 2.5-11.2 2.5-2.5 5.5-6.6 8.3-9.9 2.8-3.3 3.7-5.6 5.6-9.2 1.9-3.7.9-6.6-.5-9.2-1.4-2.8-12.5-30.1-17.1-41.1-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>'
 FB_SVG = '<svg viewBox="0 0 512 512" style="width:18px;height:18px;fill:white;margin-right:8px;vertical-align:middle;"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245.26V312.6h-66.38V256h66.38V212.87c0-65.51 38.89-101.62 98.45-101.62 28.53 0 58.31 5.1 58.31 5.1v64h-32.81c-32.36 0-42.48 20.06-42.48 40.63V256h72.06l-11.51 56.6h-60.55v188.66C413.31 482.38 504 379.78 504 256z"/></svg>'
-IG_SVG = '<svg viewBox="0 0 448 512" style="width:18px;height:18px;fill:white;margin-right:8px;vertical-align:middle;"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>'
+IG_SVG = '<svg viewBox="0 0 448 512" style="width:18px;height:18px;fill:white;margin-right:8px;vertical-align:middle;"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7 74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>'
 
 st.markdown(f"""
 <div style="display:flex;gap:12px;justify-content:center;margin-top:10px;margin-bottom:15px;flex-wrap:wrap;">

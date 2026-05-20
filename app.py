@@ -93,22 +93,24 @@ def get_precise_panchang(check_date, exact_time=None):
     diff = (moon_pos[0] - sun_pos[0]) % 360
     tithi = int(diff / 12) + 1
     
-    last_diff = diff
-    month_idx = int(sun_pos[0] / 30)
+    # --- TRUE JANTRI MONTH ANCHOR CALCULATION ---
+    if diff > 180: 
+        approx_days_to_ama = (360 - diff) / 12.189
+    else:          
+        approx_days_to_ama = -diff / 12.189
+        
+    jd_ama = jd_check + approx_days_to_ama
     
-    for h in range(1, 35 * 24):
-        jd_search = jd_check - (h / 24.0)
-        s_pos_b, _ = swe.calc_ut(jd_search, swe.SUN, swe.FLG_SIDEREAL)
-        m_pos_b, _ = swe.calc_ut(jd_search, swe.MOON, swe.FLG_SIDEREAL)
-        b_diff = (m_pos_b[0] - s_pos_b[0]) % 360
+    for _ in range(2):
+        s_ama, _ = swe.calc_ut(jd_ama, swe.SUN, swe.FLG_SIDEREAL)
+        m_ama, _ = swe.calc_ut(jd_ama, swe.MOON, swe.FLG_SIDEREAL)
+        d_ama = (m_ama[0] - s_ama[0]) % 360
+        correction = (360 - d_ama) if d_ama > 180 else -d_ama
+        jd_ama += correction / 12.189
         
-        if b_diff > 345 and last_diff < 15:
-            month_idx = int(s_pos_b[0] / 30)
-            break
-        last_diff = b_diff
-        
-    if tithi > 15:
-        month_idx = (month_idx + 1) % 12
+    s_final, _ = swe.calc_ut(jd_ama, swe.SUN, swe.FLG_SIDEREAL)
+    month_idx = int(s_final[0] / 30)
+    
     return tithi, month_idx
 
 @st.cache_data(ttl=3600)
@@ -181,7 +183,7 @@ def add_bg_from_local(image_file):
         .voharvod-card {{
             background: linear-gradient(135deg, #FF9933 0%, #FF5E62 100%);
             color: white !important; padding: 30px; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(255, 94, 98, 0.3); margin: 25px 0; text-align: center;
+            box-shadow: 0 10px 25px rgba(255, 94, 98, 0.3); margin: 25px 0; text-align: center; position: relative;
         }}
         .voharvod-card h1 {{ color: white !important; margin: 15px 0 5px 0 !important; font-size: 2.6rem !important; border: none !important; text-shadow: 0 2px 4px rgba(0,0,0,0.15); }}
         .badge-pill {{ background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-block; margin-bottom: 10px; }}
@@ -219,10 +221,9 @@ def welcome_guide():
         st.session_state["welcome_guide_dismissed"] = True
         st.rerun()
 
-# --- OFFICIAL COMPONENT-WRAPPED FEEDBACK BOX ---
 @st.dialog("💬 Support & Feedback")
 def feedback_form():
-    st.components.v1.html("""
+    st.iframe("""
     <!DOCTYPE html>
     <html>
     <head>
@@ -524,6 +525,19 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                 
                 if p.get("desc"):
                     st.markdown(f"<p style='color: #FF5E62; font-weight: bold; font-size: 1.1rem; margin-top: 20px; margin-bottom: -15px;'>{p['desc']}</p>", unsafe_allow_html=True)
+                
+                # --- FIXED: Stripped indentation to prevent markdown raw-code block rendering ---
+                overlay_msg = ""
+                if not direct_mode and time_block == "Default (Safest bet)":
+                    overlay_msg = (
+                        "<div style='margin-top: 18px; padding: 14px; background: rgba(255, 255, 255, 0.2); "
+                        "border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.5); font-size: 0.85rem; "
+                        "text-align: left; line-height: 1.5; backdrop-filter: blur(10px);'>"
+                        "ℹ️ <b>Accuracy Tip:</b> This result assumes a default afternoon birth (12 PM - 10 PM). "
+                        "If the date feels slightly off, please select your actual <b>Approximate Time of Birth</b> "
+                        "above to properly catch any early morning lunar phase transitions!"
+                        "</div>"
+                    )
 
                 st.markdown(f"""
                 <div class="voharvod-card">
@@ -532,6 +546,7 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                     <h1>{f_date.strftime('%A, %d %B %Y')}</h1>
                     <div style="margin-top: 10px; font-weight: 600; opacity: 0.9;">Matches: {tithi_str}</div>
                     {f'<div class="astro-strip">{astro_meta}</div>' if astro_meta else ''}
+                    {overlay_msg}
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -586,7 +601,7 @@ fb_url = urllib.parse.quote(APP_URL)
 
 WA_SVG = '<svg viewBox="0 0 448 512" style="width:18px;height:18px;fill:white;margin-right:8px;vertical-align:middle;"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3 18.7-68.1-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.2-8.5-44.2-27.1-16.4-14.6-27.4-32.6-30.6-37.9-3.2-5.5-.3-8.5 2.5-11.2 2.5-2.5 5.5-6.6 8.3-9.9 2.8-3.3 3.7-5.6 5.6-9.2 1.9-3.7.9-6.6-.5-9.2-1.4-2.8-12.5-30.1-17.1-41.1-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.7 23.5 9.2 31.6 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>'
 FB_SVG = '<svg viewBox="0 0 512 512" style="width:18px;height:18px;fill:white;margin-right:8px;vertical-align:middle;"><path d="M504 256C504 119 393 8 256 8S8 119 8 256c0 123.78 90.69 226.38 209.25 245.26V312.6h-66.38V256h66.38V212.87c0-65.51 38.89-101.62 98.45-101.62 28.53 0 58.31 5.1 58.31 5.1v64h-32.81c-32.36 0-42.48 20.06-42.48 40.63V256h72.06l-11.51 56.6h-60.55v188.66C413.31 482.38 504 379.78 504 256z"/></svg>'
-IG_SVG = '<svg viewBox="0 0 448 512" style="width:18px;height:18px;fill:white;margin-right:8px;vertical-align:middle;"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7 74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>'
+IG_SVG = '<svg viewBox="0 0 448 512" style="width:18px;height:18px;fill:white;margin-right:8px;vertical-align:middle;"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"/></svg>'
 
 st.markdown(f"""
 <div style="display:flex;gap:12px;justify-content:center;margin-top:10px;margin-bottom:15px;flex-wrap:wrap;">

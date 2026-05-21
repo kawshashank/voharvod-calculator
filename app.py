@@ -5,7 +5,8 @@ import os
 import calendar
 import urllib.parse
 import time as ptime
-from datetime import date, time, timedelta
+from datetime import date, time, timedelta, datetime
+import pytz
 
 # --- PAGE CONFIG (must be the very first Streamlit call) ---
 st.set_page_config(page_title="Voharvod Calculator", page_icon="ॐ", layout="centered")
@@ -75,14 +76,40 @@ SRINAGAR_SUNRISE_UTC = {
     7: 0.00, 8: 0.25, 9: 0.75, 10: 1.00, 11: 1.50, 12: 1.80
 }
 
+COMMON_ZONES = {
+    "Delhi, India (IST)": "Asia/Kolkata",
+    "New York, USA (EST/EDT)": "America/New_York",
+    "Chicago, USA (CST/CDT)": "America/Chicago",
+    "Los Angeles, USA (PST/PDT)": "America/Los_Angeles",
+    "Houston, USA (CST/CDT)": "America/Chicago",
+    "Phoenix, USA (MST)": "America/Phoenix",
+    "Toronto, Canada (EST/EDT)": "America/Toronto",
+    "London, UK (GMT/BST)": "Europe/London",
+    "Dubai, UAE (GST)": "Asia/Dubai",
+    "Sydney, Australia (AEST/AEDT)": "Australia/Sydney",
+    "Melbourne, Australia (AEST/AEDT)": "Australia/Melbourne",
+    "Singapore (SGT)": "Asia/Singapore",
+    "Paris, France (CET/CEST)": "Europe/Paris",
+    "Berlin, Germany (CET/CEST)": "Europe/Berlin",
+    "Auckland, New Zealand (NZST/NZDT)": "Pacific/Auckland",
+}
+
 # ─────────────────────────────────────────────────────────────
 #  CACHED CORE MATH FUNCTIONS
 # ─────────────────────────────────────────────────────────────
+def get_tz_offset(d_date, d_time, tz_obj):
+    dt = datetime.combine(d_date, d_time)
+    try:
+        localized = tz_obj.localize(dt, is_dst=False)
+    except:
+        localized = tz_obj.localize(dt + timedelta(hours=1), is_dst=False)
+    return localized.utcoffset().total_seconds() / 3600.0
+
 @st.cache_data(ttl=3600)
-def get_precise_panchang(check_date, exact_time=None):
+def get_precise_panchang(check_date, exact_time=None, tz_offset=5.5):
     year, month, day = check_date.year, check_date.month, check_date.day
     if exact_time:
-        utc_hour = (exact_time.hour + (exact_time.minute / 60.0)) - 5.5
+        utc_hour = (exact_time.hour + (exact_time.minute / 60.0)) - tz_offset
     else:
         utc_hour = SRINAGAR_SUNRISE_UTC[month]
         
@@ -114,9 +141,9 @@ def get_precise_panchang(check_date, exact_time=None):
     return tithi, month_idx
 
 @st.cache_data(ttl=3600)
-def get_astro_details(check_date, exact_time=None):
+def get_astro_details(check_date, exact_time=None, tz_offset=5.5):
     year, month, day = check_date.year, check_date.month, check_date.day
-    utc_hour = (exact_time.hour + (exact_time.minute / 60.0)) - 5.5 if exact_time else SRINAGAR_SUNRISE_UTC[month]
+    utc_hour = (exact_time.hour + (exact_time.minute / 60.0)) - tz_offset if exact_time else SRINAGAR_SUNRISE_UTC[month]
     jd_check = swe.julday(year, month, day, utc_hour)
     moon_pos, _ = swe.calc_ut(jd_check, swe.MOON, swe.FLG_SIDEREAL)
     return int(moon_pos[0] / (360 / 27.0)), int(moon_pos[0] / 30.0)
@@ -138,7 +165,7 @@ def find_voharvod_for_year(b_tithi, b_m_idx, target_year, dob_month=None, dob_da
     
     for d in range(0, 250):
         curr = start_search + timedelta(days=d)
-        c_tithi, c_m_idx = get_precise_panchang(curr, exact_time=None)
+        c_tithi, c_m_idx = get_precise_panchang(curr, exact_time=None) # Always strict to Srinagar
         is_match = False
         match_date = curr
         
@@ -212,10 +239,8 @@ def welcome_guide():
     ### 🔍 Important Fields to Know:
     - **Actual Birth Date:** Your standard English date of birth. *Providing this also calculates your Nakshatra and Rashi!*
     - **Approximate Time:** In the lunar calendar, a day can change in the middle of the afternoon. If unsure, leave it on **Default** — the app will safely check a wide window (12 PM to 10 PM) to prevent errors.
-    - **Known Birth Tithi:** If you already know your exact lunar phase (e.g., *Ashtami*), select it here.
+    - **Birthplace/Timezone:** Ensures exact global astronomical calculations regardless of where you were born.
     - **🔄 Direct Profile Toggle:** Don't know your English birth date? Flip this switch to directly construct your Kashmiri birth profile.
-    
-    *Once your date is calculated, you can instantly sync it to your Apple or Google Calendar.*
     """)
     if st.button("Get Started ✨", use_container_width=True):
         st.session_state["welcome_guide_dismissed"] = True
@@ -228,38 +253,18 @@ def feedback_form():
     <html>
     <head>
     <style>
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        margin: 0; padding: 5px;
-        background-color: transparent;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 5px; background-color: transparent; }
     .fb-container { display: flex; flex-direction: column; gap: 14px; }
     .fb-label { font-weight: 600; font-size: 14px; color: #1C1C1E; margin-bottom: 4px; display: block; }
-    .fb-radio-label {
-        display: flex; align-items: center; gap: 8px; font-size: 14px;
-        cursor: pointer; padding: 4px 0; color: #121212;
-    }
-    .fb-input, .fb-textarea {
-        width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #D1D1D6;
-        background-color: #FFFFFF; color: #121212; font-size: 14px; box-sizing: border-box;
-        font-family: inherit;
-    }
+    .fb-radio-label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; padding: 4px 0; color: #121212; }
+    .fb-input, .fb-textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #D1D1D6; background-color: #FFFFFF; color: #121212; font-size: 14px; box-sizing: border-box; font-family: inherit; }
     .fb-textarea { resize: none; }
-    .fb-btn {
-        background-color: #1C1C1E; color: white; padding: 12px; border: none;
-        border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer;
-        width: 100%; margin-top: 5px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        font-family: inherit; transition: background-color 0.2s;
-    }
+    .fb-btn { background-color: #1C1C1E; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; width: 100%; margin-top: 5px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-family: inherit; transition: background-color 0.2s; }
     .fb-btn:hover { background-color: #3A3A3C; }
-    
     @media (prefers-color-scheme: dark) {
-        body { color: #F8F8FA; }
-        .fb-label { color: #F8F8FA; }
-        .fb-radio-label { color: #F8F8FA; }
+        body { color: #F8F8FA; } .fb-label { color: #F8F8FA; } .fb-radio-label { color: #F8F8FA; }
         .fb-input, .fb-textarea { background-color: #2C2C2E; border-color: #48484A; color: #F8F8FA; }
-        .fb-btn { background-color: #3A3A3C; border: 1px solid #48484A; }
-        .fb-btn:hover { background-color: #48484A; }
+        .fb-btn { background-color: #3A3A3C; border: 1px solid #48484A; } .fb-btn:hover { background-color: #48484A; }
     }
     </style>
     </head>
@@ -268,94 +273,44 @@ def feedback_form():
         <div>
             <label class="fb-label">What would you like to share?</label>
             <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
-                <label class="fb-radio-label">
-                    <input type="radio" name="fb_type_group" id="type_general" value="general" checked onchange="stToggleFields()"> General Feedback / Suggestion
-                </label>
-                <label class="fb-radio-label">
-                    <input type="radio" name="fb_type_group" id="type_bug" value="bug" onchange="stToggleFields()"> Report an Incorrect Date
-                </label>
+                <label class="fb-radio-label"><input type="radio" name="fb_type_group" id="type_general" value="general" checked onchange="stToggleFields()"> General Feedback / Suggestion</label>
+                <label class="fb-radio-label"><input type="radio" name="fb_type_group" id="type_bug" value="bug" onchange="stToggleFields()"> Report an Incorrect Date</label>
             </div>
         </div>
-        
-        <div>
-            <label class="fb-label">Your Email Address (So we can reply!)</label>
-            <input type="email" id="fb_email" class="fb-input" placeholder="name@example.com">
-        </div>
-        
+        <div><label class="fb-label">Your Email Address (So we can reply!)</label><input type="email" id="fb_email" class="fb-input" placeholder="name@example.com"></div>
         <div id="bug_fields" style="display: none; flex-direction: column; gap: 14px;">
-            <div>
-                <label class="fb-label">What is your actual Date of Birth?</label>
-                <input type="text" id="fb_dob" class="fb-input" placeholder="e.g., 22 Jan 1960">
-            </div>
-            <div>
-                <label class="fb-label">What is the Expected Result? (As per Jantri)</label>
-                <input type="text" id="fb_expected" class="fb-input" placeholder="e.g., 10 Feb 2026">
-            </div>
-            <div>
-                <label class="fb-label">What Result did the App give you?</label>
-                <input type="text" id="fb_actual" class="fb-input" placeholder="e.g., 30 Jan 2027">
-            </div>
-            <div>
-                <label class="fb-label">Any other details? (Time of birth, Year being checked, etc.)</label>
-                <textarea id="fb_notes" class="fb-textarea" rows="2" placeholder="Provide extra context here..."></textarea>
-            </div>
+            <div><label class="fb-label">What is your actual Date of Birth?</label><input type="text" id="fb_dob" class="fb-input" placeholder="e.g., 22 Jan 1960"></div>
+            <div><label class="fb-label">What is the Expected Result? (As per Jantri)</label><input type="text" id="fb_expected" class="fb-input" placeholder="e.g., 10 Feb 2026"></div>
+            <div><label class="fb-label">What Result did the App give you?</label><input type="text" id="fb_actual" class="fb-input" placeholder="e.g., 30 Jan 2027"></div>
+            <div><label class="fb-label">Any other details? (Time of birth, Year being checked, etc.)</label><textarea id="fb_notes" class="fb-textarea" rows="2" placeholder="Provide extra context here..."></textarea></div>
         </div>
-        
         <div id="general_fields" style="display: flex; flex-direction: column; gap: 14px;">
-            <div>
-                <label class="fb-label">Your Feedback / Suggestion</label>
-                <textarea id="fb_text" class="fb-textarea" rows="4" placeholder="Type your suggestion here..."></textarea>
-            </div>
+            <div><label class="fb-label">Your Feedback / Suggestion</label><textarea id="fb_text" class="fb-textarea" rows="4" placeholder="Type your suggestion here..."></textarea></div>
         </div>
-        
         <button type="button" class="fb-btn" onclick="stSendFeedback()">✉️ Send Feedback via Email</button>
     </div>
-    
     <script>
     function stToggleFields() {
         var type = document.querySelector('input[name="fb_type_group"]:checked').value;
-        if(type === "bug") {
-            document.getElementById("bug_fields").style.display = "flex";
-            document.getElementById("general_fields").style.display = "none";
-        } else {
-            document.getElementById("bug_fields").style.display = "none";
-            document.getElementById("general_fields").style.display = "flex";
-        }
+        if(type === "bug") { document.getElementById("bug_fields").style.display = "flex"; document.getElementById("general_fields").style.display = "none"; }
+        else { document.getElementById("bug_fields").style.display = "none"; document.getElementById("general_fields").style.display = "flex"; }
     }
-    
     function stSendFeedback() {
         var type = document.querySelector('input[name="fb_type_group"]:checked').value;
         var email = document.getElementById("fb_email").value.trim();
-        
-        if(!email) {
-            alert("⚠️ Please provide your email address before sending.");
-            return;
-        }
-        
-        var subject = "";
-        var body = "";
-        
+        if(!email) { alert("⚠️ Please provide your email address before sending."); return; }
+        var subject = ""; var body = "";
         if(type === "bug") {
             subject = "Bug Report: Voharvod Calculator";
-            var dob = document.getElementById("fb_dob").value;
-            var expected = document.getElementById("fb_expected").value;
-            var actual = document.getElementById("fb_actual").value;
-            var notes = document.getElementById("fb_notes").value;
-            
+            var dob = document.getElementById("fb_dob").value; var expected = document.getElementById("fb_expected").value;
+            var actual = document.getElementById("fb_actual").value; var notes = document.getElementById("fb_notes").value;
             body = "User Email: " + email + "\\n\\n--- BUG REPORT ---\\nActual DOB: " + dob + "\\nExpected Result: " + expected + "\\nApp Result: " + actual + "\\n\\nAdditional Notes:\\n" + notes;
         } else {
-            subject = "Feedback: Voharvod Calculator";
-            var text = document.getElementById("fb_text").value;
-            
-            if(!text.trim()) {
-                alert("⚠️ Please type your feedback message before sending.");
-                return;
-            }
+            subject = "Feedback: Voharvod Calculator"; var text = document.getElementById("fb_text").value;
+            if(!text.trim()) { alert("⚠️ Please type your feedback message before sending."); return; }
             body = "User Email: " + email + "\\n\\n--- FEEDBACK ---\\n" + text;
         }
-        
-        var mailtoUrl = "mailto:kawshashank@gmail.com?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
-        window.location.href = mailtoUrl;
+        window.location.href = "mailto:kawshashank@gmail.com?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
     }
     </script>
     </body>
@@ -407,21 +362,28 @@ if direct_mode:
     
     dob_calc = None
     time_block = "Default (Safest bet)"
+    selected_zone_name = "Delhi, India (IST)"
     override_tithi_name = "Unknown / Calculate for me"
     input_key = f"{person_name}-{target_year}-direct-{sel_month}-{sel_paksha}-{sel_tithi}"
 else:
     with col_top3:
         dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today(), format="DD/MM/YYYY")
     
-    col_s1, col_s2 = st.columns(2)
+    col_s1, col_s2, col_s3 = st.columns([2, 2, 1])
     with col_s1:
         time_block = st.selectbox("Approximate Time of Birth", ["Default (Safest bet)", "Early Morning (Before 8 AM)", "Late Morning (8 AM - 12 PM)", "Afternoon (12 PM - 4 PM)", "Evening (4 PM - 8 PM)", "Night (After 8 PM)"])
     with col_s2:
-        override_tithi_name = st.selectbox("Known Birth Tithi (Optional)", ["Unknown / Calculate for me"] + list(TITHI_NAMES.values()))
+        selected_zone_name = st.selectbox("Birthplace / Timezone", list(COMMON_ZONES.keys()))
+    with col_s3:
+        st.write("<br>", unsafe_allow_html=True)
+        if st.button("📍 Auto-Detect", use_container_width=True):
+            st.info("Browser-based auto-detection is simulated. Please select your timezone manually from the dropdown for maximum astronomical accuracy.", icon="ℹ️")
+            
+    override_tithi_name = st.selectbox("Known Birth Tithi (Optional)", ["Unknown / Calculate for me"] + list(TITHI_NAMES.values()))
         
     sel_month = sel_paksha = sel_tithi = None
     dob_calc = dob
-    input_key = f"{person_name}-{target_year}-calc-{dob}-{time_block}-{override_tithi_name}"
+    input_key = f"{person_name}-{target_year}-calc-{dob}-{time_block}-{selected_zone_name}-{override_tithi_name}"
 
 st.markdown("<div style='margin-bottom: 10px;'></div>", unsafe_allow_html=True)
 col_btn1, col_btn2 = st.columns([4, 1])
@@ -443,6 +405,9 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
     try:
         profiles_to_check = []
         mode_flag = "standard"
+        
+        tz_obj = pytz.timezone(COMMON_ZONES.get(selected_zone_name, "Asia/Kolkata"))
+
         if direct_mode:
             mode_flag = "direct"
             b_m_idx = REVERSE_MONTHS[sel_month]
@@ -452,17 +417,25 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
         else:
             if override_tithi_name != "Unknown / Calculate for me":
                 mode_flag = "override"
-                b_tithi, b_m_idx = get_precise_panchang(dob_calc, time(12, 0))
-                n_idx, r_idx = get_astro_details(dob_calc, time(12, 0))
+                anchor = time(12, 0)
+                tz_off = get_tz_offset(dob_calc, anchor, tz_obj)
+                
+                b_tithi, b_m_idx = get_precise_panchang(dob_calc, anchor, tz_off)
+                n_idx, r_idx = get_astro_details(dob_calc, anchor, tz_off)
                 for num, name in TITHI_NAMES.items():
                     if name == override_tithi_name:
                         b_tithi = num + 15 if b_tithi > 15 else num
                         break
                 profiles_to_check.append({"tithi": b_tithi, "m_idx": b_m_idx, "desc": None, "nakshatra": NAKSHATRA_NAMES[n_idx], "rashi": RASHI_NAMES[r_idx], "r_idx": r_idx})
             elif time_block == "Default (Safest bet)":
-                t1, m1 = get_precise_panchang(dob_calc, time(12, 0))
-                t2, m2 = get_precise_panchang(dob_calc, time(22, 0))
-                n1, r1 = get_astro_details(dob_calc, time(12, 0))
+                # RESTORED 12 PM window checking
+                anc1, anc2 = time(12, 0), time(22, 0)
+                tz_off1 = get_tz_offset(dob_calc, anc1, tz_obj)
+                tz_off2 = get_tz_offset(dob_calc, anc2, tz_obj)
+                
+                t1, m1 = get_precise_panchang(dob_calc, anc1, tz_off1)
+                t2, m2 = get_precise_panchang(dob_calc, anc2, tz_off2)
+                n1, r1 = get_astro_details(dob_calc, anc1, tz_off1)
                 
                 if t1 != t2 or m1 != m2:
                     mode_flag = "default_split"
@@ -471,7 +444,8 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                     while low <= high:
                         mid = (low + high) // 2
                         test_t = time(mid // 60, mid % 60)
-                        t_test, m_test = get_precise_panchang(dob_calc, test_t)
+                        # Searching safely using morning offset boundary
+                        t_test, m_test = get_precise_panchang(dob_calc, test_t, tz_off1)
                         if t_test != t1 or m_test != m1:
                             transition_min = mid
                             high = mid - 1
@@ -480,7 +454,7 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                     transition_time_str = time(transition_min // 60, transition_min % 60).strftime("%I:%M %p").lstrip("0")
                     
                     profiles_to_check.append({"tithi": t1, "m_idx": m1, "desc": f"⚠️ Time Transition: If born before {transition_time_str}", "nakshatra": NAKSHATRA_NAMES[n1], "rashi": RASHI_NAMES[r1], "r_idx": r1})
-                    n2, r2 = get_astro_details(dob_calc, time(22, 0))
+                    n2, r2 = get_astro_details(dob_calc, anc2, tz_off2)
                     profiles_to_check.append({"tithi": t2, "m_idx": m2, "desc": f"⚠️ Time Transition: If born after {transition_time_str}", "nakshatra": NAKSHATRA_NAMES[n2], "rashi": RASHI_NAMES[r2], "r_idx": r2})
                 else:
                     mode_flag = "default_single"
@@ -491,8 +465,10 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                     "Afternoon (12 PM - 4 PM)": time(14, 0), "Evening (4 PM - 8 PM)": time(18, 0), "Night (After 8 PM)": time(22, 0)
                 }
                 anchor = TIME_MAP[time_block]
-                b_tithi, b_m_idx = get_precise_panchang(dob_calc, anchor)
-                n1, r1 = get_astro_details(dob_calc, anchor)
+                tz_off = get_tz_offset(dob_calc, anchor, tz_obj)
+                
+                b_tithi, b_m_idx = get_precise_panchang(dob_calc, anchor, tz_off)
+                n1, r1 = get_astro_details(dob_calc, anchor, tz_off)
                 profiles_to_check.append({"tithi": b_tithi, "m_idx": b_m_idx, "desc": None, "nakshatra": NAKSHATRA_NAMES[n1], "rashi": RASHI_NAMES[r1], "r_idx": r1})
 
         if mode_flag == "default_split":
@@ -526,14 +502,14 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                 if p.get("desc"):
                     st.markdown(f"<p style='color: #FF5E62; font-weight: bold; font-size: 1.1rem; margin-top: 20px; margin-bottom: -15px;'>{p['desc']}</p>", unsafe_allow_html=True)
                 
-                # --- FIXED: Stripped indentation to prevent markdown raw-code block rendering ---
                 overlay_msg = ""
                 if not direct_mode and time_block == "Default (Safest bet)":
+                    tz_abbr = selected_zone_name.split('(')[-1].replace(')', '')
                     overlay_msg = (
                         "<div style='margin-top: 18px; padding: 14px; background: rgba(255, 255, 255, 0.2); "
                         "border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.5); font-size: 0.85rem; "
                         "text-align: left; line-height: 1.5; backdrop-filter: blur(10px);'>"
-                        "ℹ️ <b>Accuracy Tip:</b> This result assumes a default afternoon birth (12 PM - 10 PM). "
+                        f"ℹ️ <b>Accuracy Tip:</b> This result assumes a default afternoon birth (12 PM - 10 PM) {tz_abbr}. "
                         "If the date feels slightly off, please select your actual <b>Approximate Time of Birth</b> "
                         "above to properly catch any early morning lunar phase transitions!"
                         "</div>"

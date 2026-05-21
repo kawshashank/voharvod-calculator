@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import swisseph as swe
 import base64
 import os
@@ -322,6 +323,44 @@ def feedback_form():
 # ─────────────────────────────────────────────────────────────
 add_bg_from_local("mahadev.jpg")
 
+# ── Mobile keyboard suppression ───────────────────────────────────────────────
+# Streamlit's BaseWeb selectbox renders a real <input type="text"> inside every
+# dropdown.  On iOS Safari / Android Chrome the virtual keyboard fires on any
+# focused <input>, regardless of pointer-events CSS.  Setting inputmode="none"
+# is the correct HTML-level signal that tells the mobile browser "do NOT open
+# a keyboard for this field."  We inject it via a MutationObserver so it stays
+# applied even after Streamlit re-renders individual components.
+# This is a zero-impact change: it only touches attribute values on select
+# inputs; all dropdown functionality (click-to-open, option selection) is
+# completely unaffected.
+components.html("""
+<script>
+(function () {
+    function patchSelectInputs() {
+        var inputs = window.parent.document.querySelectorAll(
+            '[data-baseweb="select"] input'
+        );
+        inputs.forEach(function (inp) {
+            // Guard: skip inputs we have already patched to avoid redundant work
+            if (!inp.hasAttribute('data-kb-patched')) {
+                inp.setAttribute('inputmode', 'none');
+                inp.setAttribute('data-kb-patched', '1');
+            }
+        });
+    }
+    // Apply immediately for inputs already in the DOM
+    patchSelectInputs();
+    // Re-apply whenever Streamlit adds/replaces components
+    var observer = new MutationObserver(patchSelectInputs);
+    observer.observe(window.parent.document.body, {
+        childList: true,
+        subtree: true
+    });
+})();
+</script>
+""", height=0, scrolling=False)
+# ─────────────────────────────────────────────────────────────────────────────
+
 has_shared_params = "month" in st.query_params and "paksha" in st.query_params and "tithi" in st.query_params
 
 if "welcome_guide_dismissed" not in st.session_state:
@@ -369,15 +408,11 @@ else:
     with col_top3:
         dob = st.date_input("Actual Birth Date", value=date(2000, 12, 31), min_value=date(1940, 1, 1), max_value=date.today(), format="DD/MM/YYYY")
     
-    col_s1, col_s2, col_s3 = st.columns([2, 2, 1])
+    col_s1, col_s2 = st.columns(2)
     with col_s1:
         time_block = st.selectbox("Approximate Time of Birth", ["Default (Safest bet)", "Early Morning (Before 8 AM)", "Late Morning (8 AM - 12 PM)", "Afternoon (12 PM - 4 PM)", "Evening (4 PM - 8 PM)", "Night (After 8 PM)"])
     with col_s2:
         selected_zone_name = st.selectbox("Birthplace / Timezone", list(COMMON_ZONES.keys()))
-    with col_s3:
-        st.write("<br>", unsafe_allow_html=True)
-        if st.button("📍 Auto-Detect", use_container_width=True):
-            st.info("Browser-based auto-detection is simulated. Please select your timezone manually from the dropdown for maximum astronomical accuracy.", icon="ℹ️")
             
     override_tithi_name = st.selectbox("Known Birth Tithi (Optional)", ["Unknown / Calculate for me"] + list(TITHI_NAMES.values()))
         
@@ -428,7 +463,6 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                         break
                 profiles_to_check.append({"tithi": b_tithi, "m_idx": b_m_idx, "desc": None, "nakshatra": NAKSHATRA_NAMES[n_idx], "rashi": RASHI_NAMES[r_idx], "r_idx": r_idx})
             elif time_block == "Default (Safest bet)":
-                # RESTORED 12 PM window checking
                 anc1, anc2 = time(12, 0), time(22, 0)
                 tz_off1 = get_tz_offset(dob_calc, anc1, tz_obj)
                 tz_off2 = get_tz_offset(dob_calc, anc2, tz_obj)
@@ -444,7 +478,6 @@ if "active_key" in st.session_state and st.session_state["active_key"] == input_
                     while low <= high:
                         mid = (low + high) // 2
                         test_t = time(mid // 60, mid % 60)
-                        # Searching safely using morning offset boundary
                         t_test, m_test = get_precise_panchang(dob_calc, test_t, tz_off1)
                         if t_test != t1 or m_test != m1:
                             transition_min = mid
